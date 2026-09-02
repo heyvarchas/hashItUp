@@ -19,6 +19,14 @@ DATABASE_URL = os.environ.get(
     "postgresql://welfare_admin:changeme_dev_only@localhost:5432/welfare_db",
 )
 
+# If host is 'db' but cannot be resolved on host outside docker, fallback to localhost
+if "@db:" in DATABASE_URL:
+    import socket
+    try:
+        socket.gethostbyname("db")
+    except (socket.gaierror, Exception):
+        DATABASE_URL = DATABASE_URL.replace("@db:", "@localhost:")
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -39,13 +39,15 @@ class ObservedFeatureGenerator:
         self.rng = np.random.default_rng(random_seed)
 
     def generate_all_tables(
-        self, trajectories: List[LatentTrajectory]
+        self,
+        trajectories: List[LatentTrajectory],
+        existing_unit_map: Optional[Dict[str, str]] = None,
     ) -> Dict[str, pd.DataFrame]:
         """
         Main entrypoint: generates all 6 analytics tables and 3 identity tables.
         """
         # Identity Schema
-        units_df = self._generate_units_table(trajectories)
+        units_df = self._generate_units_table(trajectories, existing_unit_map=existing_unit_map)
         personnel_df = self._generate_personnel_table(trajectories, units_df)
         roles_df = self._generate_user_roles_table(personnel_df)
 
@@ -75,12 +77,17 @@ class ObservedFeatureGenerator:
     # Identity Schema Generators
     # -------------------------------------------------------------------------
 
-    def _generate_units_table(self, trajectories: List[LatentTrajectory]) -> pd.DataFrame:
+    def _generate_units_table(
+        self,
+        trajectories: List[LatentTrajectory],
+        existing_unit_map: Optional[Dict[str, str]] = None,
+    ) -> pd.DataFrame:
         unit_names = sorted(list({t.profile.unit_name for t in trajectories}))
         unit_rows = []
         for name in unit_names:
+            uid = (existing_unit_map or {}).get(name) or str(uuid.uuid4())
             unit_rows.append({
-                "unit_id": str(uuid.uuid4()),
+                "unit_id": uid,
                 "unit_name": name,
             })
         return pd.DataFrame(unit_rows)

@@ -331,13 +331,15 @@ class LatentTrajectoryGenerator:
             daily_event_tags=daily_event_tags,
         )
 
-    def generate_population(self, num_people: int = 50) -> List[LatentTrajectory]:
+    def generate_population(
+        self, num_people: int = 50, start_index: int = 1
+    ) -> List[LatentTrajectory]:
         """
-        Generates trajectories for N distinct individuals.
+        Generates trajectories for N distinct individuals starting from start_index.
         """
         trajectories: List[LatentTrajectory] = []
         for i in range(num_people):
-            profile = self.generate_person_profile(i + 1)
+            profile = self.generate_person_profile(start_index + i)
             traj = self.simulate_trajectory(profile)
             trajectories.append(traj)
         return trajectories
