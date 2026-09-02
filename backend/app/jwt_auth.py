@@ -36,8 +36,9 @@ def create_access_token(person_id: str, pseudonymous_id: str, role: str) -> str:
     """Issue a signed JWT containing the caller's identity claims and role."""
     expire = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {
-        "sub": person_id,
-        "pseudonymous_id": pseudonymous_id,
+        "sub": str(person_id),
+        "person_id": str(person_id),
+        "pseudonymous_id": str(pseudonymous_id),
         "role": role,
         "exp": expire,
     }

@@ -8,11 +8,16 @@ networking all actually work before any real logic gets added.
 
 from fastapi import FastAPI
 
+from app.auth import router as auth_router
+
 app = FastAPI(
     title="Welfare Monitoring System API",
     description="MVP backend for the Personnel Stress & Welfare Monitoring System",
     version="0.1.0",
 )
+
+app.include_router(auth_router)
+
 
 
 @app.get("/health")
