@@ -1,0 +1,95 @@
+================================================================================
+PHASE 5.1 FEATURE ENGINEERING: 5-PERSON SPOT-CHECK REPORT
+Evaluation Point-in-Time (As-Of Date): 2026-03-10 (Zero Future Temporal Leakage)
+================================================================================
+
+[1. Person: SN-100001 (WO2) | Pseudonymous ID: a789808b-9d6e-4182-8b54-ba7064f7ac61]
+  1. avg_duty_hours_4wk        : 8.92 hrs/shift (Total: 214.0 hrs)
+  2. consecutive_night_shifts  : 0 consecutive days
+  3. days_since_last_leave     : 365.0 days
+  4. deployment_duration_days  : 0 days active (Hardship: 0)
+  5. transfers_last_12mo       : 0 transfers
+  6. training_load_4wk         : 12.9 hours
+  7. wellness_score_trend      : +0.50 slope (last 3 submissions)
+  8. sleep_score_trend         : +0.00 slope (last 3 submissions)
+  9. sudden_wellness_drop      : 0 (drop >= 2 pts)
+  -- Additional Signals --
+  -  duty_irregularity_index   : 1.16 std dev
+  -  latest_mood_score         : 4 / 5
+  -  latest_sleep_quality      : 3 / 5
+  -  latest_stress_self_rating : 2 / 10
+  -  help_requested_recent     : False
+  -  self_report_recency_days  : 3.0 days
+--------------------------------------------------------------------------------
+[2. Person: SN-100002 (Maj) | Pseudonymous ID: 72e0f47d-0ed0-409a-9bbb-0564203ceda6]
+  1. avg_duty_hours_4wk        : 9.62 hrs/shift (Total: 269.4 hrs)
+  2. consecutive_night_shifts  : 0 consecutive days
+  3. days_since_last_leave     : 365.0 days
+  4. deployment_duration_days  : 24 days active (Hardship: 1)
+  5. transfers_last_12mo       : 0 transfers
+  6. training_load_4wk         : 18.8 hours
+  7. wellness_score_trend      : -0.50 slope (last 3 submissions)
+  8. sleep_score_trend         : +0.00 slope (last 3 submissions)
+  9. sudden_wellness_drop      : 0 (drop >= 2 pts)
+  -- Additional Signals --
+  -  duty_irregularity_index   : 2.18 std dev
+  -  latest_mood_score         : 3 / 5
+  -  latest_sleep_quality      : 3 / 5
+  -  latest_stress_self_rating : 5 / 10
+  -  help_requested_recent     : False
+  -  self_report_recency_days  : 2.0 days
+--------------------------------------------------------------------------------
+[3. Person: SN-100003 (WO1) | Pseudonymous ID: 45ad8569-ef44-4e61-939f-51d9e4a14686]
+  1. avg_duty_hours_4wk        : 9.44 hrs/shift (Total: 264.3 hrs)
+  2. consecutive_night_shifts  : 0 consecutive days
+  3. days_since_last_leave     : 365.0 days
+  4. deployment_duration_days  : 50 days active (Hardship: 1)
+  5. transfers_last_12mo       : 0 transfers
+  6. training_load_4wk         : 30.2 hours
+  7. wellness_score_trend      : -0.50 slope (last 3 submissions)
+  8. sleep_score_trend         : +0.00 slope (last 3 submissions)
+  9. sudden_wellness_drop      : 0 (drop >= 2 pts)
+  -- Additional Signals --
+  -  duty_irregularity_index   : 1.87 std dev
+  -  latest_mood_score         : 4 / 5
+  -  latest_sleep_quality      : 3 / 5
+  -  latest_stress_self_rating : 3 / 10
+  -  help_requested_recent     : False
+  -  self_report_recency_days  : 0.0 days
+--------------------------------------------------------------------------------
+[4. Person: SN-100004 (Maj) | Pseudonymous ID: 999d258f-dc9e-4e2e-be14-d6d118a5404d]
+  1. avg_duty_hours_4wk        : 9.81 hrs/shift (Total: 225.7 hrs)
+  2. consecutive_night_shifts  : 1 consecutive days
+  3. days_since_last_leave     : 365.0 days
+  4. deployment_duration_days  : 0 days active (Hardship: 0)
+  5. transfers_last_12mo       : 0 transfers
+  6. training_load_4wk         : 36.3 hours
+  7. wellness_score_trend      : +0.50 slope (last 3 submissions)
+  8. sleep_score_trend         : -0.00 slope (last 3 submissions)
+  9. sudden_wellness_drop      : 0 (drop >= 2 pts)
+  -- Additional Signals --
+  -  duty_irregularity_index   : 2.65 std dev
+  -  latest_mood_score         : 4 / 5
+  -  latest_sleep_quality      : 4 / 5
+  -  latest_stress_self_rating : 4 / 10
+  -  help_requested_recent     : False
+  -  self_report_recency_days  : 1.0 days
+--------------------------------------------------------------------------------
+[5. Person: SN-100005 (Pte) | Pseudonymous ID: 4494bc6e-3d0d-425e-8d18-b856f5e83356]
+  1. avg_duty_hours_4wk        : 9.43 hrs/shift (Total: 207.5 hrs)
+  2. consecutive_night_shifts  : 0 consecutive days
+  3. days_since_last_leave     : 365.0 days
+  4. deployment_duration_days  : 0 days active (Hardship: 0)
+  5. transfers_last_12mo       : 0 transfers
+  6. training_load_4wk         : 22.0 hours
+  7. wellness_score_trend      : +0.50 slope (last 3 submissions)
+  8. sleep_score_trend         : -0.50 slope (last 3 submissions)
+  9. sudden_wellness_drop      : 0 (drop >= 2 pts)
+  -- Additional Signals --
+  -  duty_irregularity_index   : 1.26 std dev
+  -  latest_mood_score         : 4 / 5
+  -  latest_sleep_quality      : 2 / 5
+  -  latest_stress_self_rating : 5 / 10
+  -  help_requested_recent     : False
+  -  self_report_recency_days  : 0.0 days
+--------------------------------------------------------------------------------
