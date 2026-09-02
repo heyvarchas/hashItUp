@@ -21,6 +21,8 @@ Design decisions for the MVP (see Section 2.2 of the build checklist):
 import os
 from datetime import datetime, timedelta, timezone
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 # In production this MUST come from a real secret store (Vault/KMS), never
@@ -30,6 +32,8 @@ from jose import JWTError, jwt
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "INSECURE_DEV_ONLY_CHANGE_ME")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
+
+http_bearer = HTTPBearer(auto_error=True)
 
 
 def create_access_token(person_id: str, pseudonymous_id: str, role: str) -> str:
@@ -56,3 +60,47 @@ def decode_access_token(token: str) -> dict:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         raise
+
+
+def get_current_user_claims(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+) -> dict:
+    """
+    Extract and decode JWT from Authorization: Bearer <token> header.
+    Returns claims dict if valid; raises 401 if missing, invalid, or expired.
+    """
+    try:
+        payload = decode_access_token(credentials.credentials)
+        if "role" not in payload or ("person_id" not in payload and "sub" not in payload):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload: missing required claims",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def require_roles(allowed_roles: list[str] | tuple[str, ...]):
+    """
+    FastAPI dependency factory for Role-Based Access Control (RBAC).
+    Checks whether the role claim in the JWT is in allowed_roles.
+    Returns claims if allowed, raises 403 Forbidden otherwise.
+    """
+    allowed = set(allowed_roles)
+
+    def role_checker(claims: dict = Depends(get_current_user_claims)) -> dict:
+        user_role = claims.get("role")
+        if user_role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted: role '{user_role}' does not have access",
+            )
+        return claims
+
+    return role_checker

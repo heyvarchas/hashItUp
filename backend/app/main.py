@@ -6,9 +6,10 @@ so we have proof that the container, the app, and Docker Compose
 networking all actually work before any real logic gets added.
 """
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from app.auth import router as auth_router
+from app.jwt_auth import get_current_user_claims, require_roles
 
 app = FastAPI(
     title="Welfare Monitoring System API",
@@ -18,6 +19,42 @@ app = FastAPI(
 
 app.include_router(auth_router)
 
+
+# ---------------------------------------------------------------------------
+# Task 2.3 dummy protected routes for RBAC verification
+# ---------------------------------------------------------------------------
+
+@app.get("/dummy/personnel-only")
+def dummy_personnel_only(claims: dict = Depends(require_roles(["personnel"]))):
+    """Accessible ONLY by users with 'personnel' role."""
+    return {
+        "message": "Access granted: personnel route",
+        "person_id": claims.get("person_id"),
+        "role": claims.get("role"),
+    }
+
+
+@app.get("/dummy/welfare-officer-only")
+def dummy_welfare_officer_only(
+    claims: dict = Depends(require_roles(["welfare_officer"])),
+):
+    """Accessible ONLY by users with 'welfare_officer' role."""
+    return {
+        "message": "Access granted: welfare_officer route",
+        "person_id": claims.get("person_id"),
+        "role": claims.get("role"),
+    }
+
+
+@app.get("/dummy/authenticated")
+def dummy_authenticated(claims: dict = Depends(get_current_user_claims)):
+    """Accessible by ANY valid authenticated JWT regardless of role."""
+    return {
+        "message": "Access granted: authenticated user",
+        "person_id": claims.get("person_id"),
+        "pseudonymous_id": claims.get("pseudonymous_id"),
+        "role": claims.get("role"),
+    }
 
 
 @app.get("/health")
@@ -35,3 +72,4 @@ def health_check():
 @app.get("/")
 def root():
     return {"message": "Welfare Monitoring System API — see /docs for endpoints"}
+
