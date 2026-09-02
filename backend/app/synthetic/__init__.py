@@ -5,6 +5,7 @@ Phase 3.2: Observed-feature generation from trajectories.
 Phase 3.3: Forward-looking label generation.
 """
 
+from app.synthetic.assemble_dataset import assemble_training_dataset, assign_temporal_split
 from app.synthetic.labels import ForwardLabelGenerator, LabeledObservation
 from app.synthetic.observed_features import ObservedFeatureGenerator
 from app.synthetic.trajectory import (
@@ -23,5 +24,8 @@ __all__ = [
     "LatentTrajectoryGenerator",
     "ObservedFeatureGenerator",
     "PersonProfile",
+    "assemble_training_dataset",
+    "assign_temporal_split",
     "plot_population_trajectories",
 ]
+
