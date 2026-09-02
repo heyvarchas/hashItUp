@@ -20,7 +20,7 @@ def health_check():
     """
     Basic liveness check.
     Returns 200 + a simple payload if the app process is up and serving requests.
-    We are not checking the database yet — that comes in Phase 1.2 once
+    Does NOT check the database yet — that comes in Phase 1.2 once
     the DB schema/migrations exist. For now this only proves the
     backend container itself boots correctly under Docker Compose.
     """
