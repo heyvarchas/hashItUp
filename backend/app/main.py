@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI
 
 from app.auth import router as auth_router
 from app.hr import router as hr_router
+from app.wellness import router as wellness_router
 from app.jwt_auth import get_current_user_claims, require_roles
 
 app = FastAPI(
@@ -20,6 +21,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(hr_router)
+app.include_router(wellness_router)
 
 
 # ---------------------------------------------------------------------------
