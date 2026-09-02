@@ -1,0 +1,20 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / frontend (web/ added in Phase 8)
+node_modules/
+dist/
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+.idea/
+
+# ML artifacts (added in Phase 5)
+*.joblib

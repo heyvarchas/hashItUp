@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    container_name: welfare_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-welfare_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-welfare_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - welfare_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-welfare_admin}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: welfare_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-welfare_admin}:${POSTGRES_PASSWORD:-changeme_dev_only}@db:5432/${POSTGRES_DB:-welfare_db}
+    volumes:
+      - ./backend/app:/app/app   # live-reload local code changes into the container
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  welfare_pg_data:
