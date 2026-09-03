@@ -32,12 +32,14 @@ from app.models import (
     DutyRecord,
     LeaveRecord,
     Personnel,
+    RiskScore,
     TrainingRecord,
     Transfer,
     Unit,
     UserRole,
     WellnessAssessment,
 )
+from app.risk import compute_risk
 from app.synthetic.observed_features import ObservedFeatureGenerator
 from app.synthetic.trajectory import LatentTrajectoryGenerator
 
@@ -69,7 +71,17 @@ def seed_database(
         start_index = 1
     else:
         current_count = db.execute(text("SELECT count(*) FROM identity.personnel")).scalar() or 0
-        start_index = current_count + 1
+        max_sn = db.execute(
+            text("SELECT service_number FROM identity.personnel WHERE service_number LIKE 'SN-1%' ORDER BY service_number DESC LIMIT 1")
+        ).scalar()
+        if max_sn and max_sn.startswith("SN-"):
+            try:
+                max_num = int(max_sn.replace("SN-", ""))
+                start_index = max(max_num - 100000 + 1, current_count + 1)
+            except ValueError:
+                start_index = current_count + 1
+        else:
+            start_index = current_count + 1
 
     # 1. Simulate Trajectories
     traj_gen = LatentTrajectoryGenerator(num_days=num_days, random_seed=random_seed)
@@ -166,6 +178,13 @@ def seed_database(
 
     db.commit()
 
+    # 3.10 Synchronous Risk Scoring (analytics.risk_scores) — Phase 6.3
+    # Trigger compute_risk for all seeded personnel post-ingestion
+    seeded_pids = tables["personnel"]["pseudonymous_id"].tolist()
+    for pid in seeded_pids:
+        compute_risk(pid, db=db, save_to_db=True)
+    counts["risk_scores"] = len(seeded_pids)
+
     elapsed = time.time() - start_time
 
     # 4. Referential Integrity Verification
@@ -195,6 +214,7 @@ def verify_database_seeding(db: Session) -> Dict[str, Any]:
         "transfers",
         "training_records",
         "wellness_assessments",
+        "risk_scores",
     ]
 
     table_stats = {}

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.jwt_auth import require_roles
 from app.models import WellnessAssessment
+from app.risk import compute_risk
 from app.schemas import WellnessAssessmentCreate, WellnessAssessmentOut
 
 router = APIRouter(prefix="/wellness", tags=["wellness"])
@@ -35,7 +36,8 @@ def submit_wellness_assessment(
 ):
     """
     Personnel-only endpoint to submit a daily/periodic wellness assessment.
-    Validates score ranges and binds the submission to the caller's pseudonymous_id.
+    Validates score ranges, binds the submission to the caller's pseudonymous_id,
+    and synchronously computes & persists updated risk scores (Phase 6.3).
     """
     caller_pseudonymous_id = claims.get("pseudonymous_id")
     if not caller_pseudonymous_id:
@@ -61,6 +63,14 @@ def submit_wellness_assessment(
         db.add(assessment)
         db.commit()
         db.refresh(assessment)
+
+        # Synchronously trigger risk scoring on assessment submission (Phase 6.3)
+        compute_risk(
+            pseudonymous_id=caller_pseudonymous_id,
+            db=db,
+            save_to_db=True,
+        )
+
         return assessment
     except Exception as e:
         db.rollback()
