@@ -22,15 +22,56 @@ from app.risk import load_risk_model
 
 
 
+import logging
+from pathlib import Path
+
+logger = logging.getLogger("uvicorn")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Lifespan event handler for FastAPI.
-    Loads the trained calibrated XGBoost risk model artifact (model.joblib)
-    into memory on startup (Phase 6.1).
+    1. Runs database migrations (alembic upgrade head) so tables exist on fresh DB boots.
+    2. Seeds demo persona and test credentials if database is empty.
+    3. Loads the trained calibrated XGBoost risk model artifact into memory (Phase 6.1).
     """
+    # 1. Run database migrations
+    try:
+        from alembic.config import Config
+        from alembic import command
+        from app.db import DATABASE_URL, SessionLocal
+
+        alembic_ini_path = Path(__file__).resolve().parent.parent / "alembic.ini"
+        if alembic_ini_path.exists():
+            logger.info("Applying database migrations (alembic upgrade head)...")
+            alembic_cfg = Config(str(alembic_ini_path))
+            alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrations applied successfully.")
+    except Exception as e:
+        logger.warning(f"Could not apply migrations during startup: {e}")
+
+    # 2. Check and seed demo persona / test credentials if DB is unseeded
+    try:
+        from app.models import Personnel
+        from app.synthetic.demo_persona import seed_demo_persona
+
+        db = SessionLocal()
+        try:
+            person_count = db.query(Personnel).count()
+            if person_count == 0:
+                logger.info("Database is empty. Auto-seeding scripted demo persona and test credentials...")
+                seed_demo_persona(db)
+                logger.info("Demo persona and test credentials seeded successfully.")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Could not auto-seed demo persona during startup: {e}")
+
+    # 3. Load ML model
     app.state.risk_model = load_risk_model()
     yield
+
 
 
 from fastapi.middleware.cors import CORSMiddleware

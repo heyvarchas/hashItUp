@@ -58,10 +58,11 @@ def get_or_create_demo_unit(db: Session, unit_name: str = DEMO_PERSONA_UNIT) -> 
     """Retrieves or creates the demo battalion unit."""
     unit = db.query(Unit).filter(Unit.unit_name == unit_name).first()
     if not unit:
-        unit = Unit(id=uuid.uuid4(), unit_id=uuid.uuid4(), unit_name=unit_name)
+        unit = Unit(unit_id=uuid.uuid4(), unit_name=unit_name)
         db.add(unit)
         db.flush()
     return unit
+
 
 
 def seed_demo_persona(
