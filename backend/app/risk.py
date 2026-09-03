@@ -25,6 +25,7 @@ from app.db import SessionLocal
 from app.explainability import get_top_contributing_factors
 from app.features import _parse_date, compute_all_features_for_person
 from app.models import (
+    Alert,
     Deployment,
     DutyRecord,
     LeaveRecord,
@@ -34,6 +35,7 @@ from app.models import (
     Transfer,
     WellnessAssessment,
 )
+
 from app.recommendations import evaluate_recommendations
 from app.train_model import WelfareRiskModel
 from app.rules import evaluate_deterministic_rules
@@ -376,9 +378,41 @@ def compute_risk(
                 )
                 db.add(rec_record)
 
+            # 8. Alert Creation + Deduplication (Phase 7.2)
+            # When risk crosses into high or critical, create an analytics.alerts row
+            # but first check for an existing status='open' alert for that person and update/skip
+            if final_category in ("high", "critical"):
+                # Check for an existing open alert for this individual
+                existing_open_alert = (
+                    db.query(Alert)
+                    .join(RiskScore, Alert.risk_score_id == RiskScore.id)
+                    .filter(
+                        RiskScore.pseudonymous_id == pid_uuid,
+                        Alert.status == "open",
+                    )
+                    .order_by(Alert.created_at.desc())
+                    .first()
+                )
+
+                if existing_open_alert:
+                    # Update existing open alert to link to newest risk_score and update severity if needed
+                    existing_open_alert.risk_score_id = score_record.id
+                    existing_open_alert.severity = final_category
+                else:
+                    # Create new open alert
+                    new_alert = Alert(
+                        id=uuid.uuid4(),
+                        risk_score_id=score_record.id,
+                        severity=final_category,
+                        status="open",
+                        created_at=computed_at,
+                    )
+                    db.add(new_alert)
+
             db.commit()
             db.refresh(score_record)
             risk_score_id = str(score_record.id)
+
 
         return {
             "pseudonymous_id": pid_str,

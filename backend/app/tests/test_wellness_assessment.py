@@ -101,8 +101,9 @@ class TestWellnessAssessmentSubmissionAndHistory(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         try:
-            # Clean up all assessments, recommendations, and risk scores created for test personnel
+            # Clean up all assessments, alerts, recommendations, and risk scores created for test personnel
             test_pseudo_ids = [cls.p1_pseudo_id, cls.p2_pseudo_id, cls.w_pseudo_id, cls.a_pseudo_id]
+            cls.db.execute(text("DELETE FROM analytics.alerts WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id IN :pids)"), {"pids": tuple(test_pseudo_ids)})
             cls.db.execute(text("DELETE FROM analytics.recommendations WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id IN :pids)"), {"pids": tuple(test_pseudo_ids)})
             cls.db.query(RiskScore).filter(RiskScore.pseudonymous_id.in_(test_pseudo_ids)).delete(synchronize_session=False)
             cls.db.query(WellnessAssessment).filter(WellnessAssessment.pseudonymous_id.in_(test_pseudo_ids)).delete(synchronize_session=False)
@@ -113,6 +114,7 @@ class TestWellnessAssessmentSubmissionAndHistory(unittest.TestCase):
             cls.db.query(Personnel).filter(Personnel.person_id.in_(test_person_ids)).delete(synchronize_session=False)
             cls.db.commit()
         finally:
+
             cls.db.close()
 
 
