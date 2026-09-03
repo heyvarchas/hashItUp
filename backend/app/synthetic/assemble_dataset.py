@@ -116,19 +116,28 @@ def assemble_training_dataset(
 
     feature_rows: List[Dict] = []
 
-    # Map personnel metadata if provided
+    # Map personnel metadata and lookup dictionary
     person_meta = {}
+    sn_to_pseudo = {}
     if personnel_df is not None and not personnel_df.empty:
         for _, p_row in personnel_df.iterrows():
             pid_str = str(p_row["pseudonymous_id"]).lower()
+            sn = p_row.get("service_number")
             person_meta[pid_str] = {
-                "service_number": p_row.get("service_number"),
+                "service_number": sn,
                 "rank": p_row.get("rank"),
             }
+            if sn:
+                sn_to_pseudo[sn] = pid_str
 
     # Iterate over every labeled observation instance
     for _, l_row in labels_df_clean.iterrows():
-        pid = l_row["pseudo_id_str"]
+        sn = l_row.get("service_number")
+        if sn and sn in sn_to_pseudo:
+            pid = sn_to_pseudo[sn]
+        else:
+            pid = l_row["pseudo_id_str"]
+
         as_of = l_row["obs_date_obj"]
 
         # Compute point-in-time features with zero temporal leakage
