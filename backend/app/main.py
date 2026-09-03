@@ -6,17 +6,33 @@ so we have proof that the container, the app, and Docker Compose
 networking all actually work before any real logic gets added.
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI
 
 from app.auth import router as auth_router
 from app.hr import router as hr_router
 from app.wellness import router as wellness_router
 from app.jwt_auth import get_current_user_claims, require_roles
+from app.risk import load_risk_model
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event handler for FastAPI.
+    Loads the trained calibrated XGBoost risk model artifact (model.joblib)
+    into memory on startup (Phase 6.1).
+    """
+    app.state.risk_model = load_risk_model()
+    yield
+
 
 app = FastAPI(
     title="Welfare Monitoring System API",
     description="MVP backend for the Personnel Stress & Welfare Monitoring System",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.include_router(auth_router)
