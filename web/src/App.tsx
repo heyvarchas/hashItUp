@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/AppLayout';
 import { Login } from './pages/Login';
 import { PersonnelDashboard } from './pages/PersonnelDashboard';
+import { WellnessCheckin } from './pages/WellnessCheckin';
 import { WelfareDashboard } from './pages/WelfareDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 
@@ -49,15 +50,7 @@ export function App() {
               {/* Personnel Routes */}
               <Route element={<ProtectedRoute allowedRoles={['personnel']} />}>
                 <Route path="/personnel" element={<PersonnelDashboard />} />
-                <Route
-                  path="/personnel/checkin"
-                  element={
-                    <div className="p-8 bg-slate-900 border border-slate-800 rounded-2xl text-center">
-                      <h2 className="text-xl font-bold text-white mb-2">Wellness Check-in Form</h2>
-                      <p className="text-sm text-slate-400">Ready for Task 8.2 implementation.</p>
-                    </div>
-                  }
-                />
+                <Route path="/personnel/checkin" element={<WellnessCheckin />} />
               </Route>
 
               {/* Welfare Officer Routes */}
