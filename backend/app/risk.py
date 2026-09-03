@@ -34,6 +34,7 @@ from app.models import (
     WellnessAssessment,
 )
 from app.train_model import WelfareRiskModel
+from app.rules import evaluate_deterministic_rules
 
 # Module-level model cache
 _LOADED_MODEL: Optional[WelfareRiskModel] = None
@@ -311,25 +312,46 @@ def compute_risk(
         prediction = risk_model.predict_risk_score(features, top_k=3)
 
         probability_score = float(prediction["probability_score"])
-        calibrated_score = int(prediction["calibrated_score"])
-        risk_category = get_risk_category(calibrated_score)
-        welfare_concern = bool(prediction.get("welfare_concern_30d", calibrated_score >= 65))
+        raw_calibrated_score = int(prediction["calibrated_score"])
+        raw_risk_category = get_risk_category(raw_calibrated_score)
         contributing_factors = list(prediction.get("contributing_factors", []))
+
+        # 5. Deterministic Rule Engine Layer (Phase 6.2)
+        # Rules can ONLY escalate the category, never lower it
+        rule_eval = evaluate_deterministic_rules(
+            features=features,
+            raw_category=raw_risk_category,
+            raw_score=raw_calibrated_score,
+        )
+
+        final_category = rule_eval["final_category"]
+        final_score = rule_eval["final_score"]
+        rule_flags = rule_eval["rule_flags"]
+        is_escalated = rule_eval["escalated"]
+
+        welfare_concern = final_category in ("high", "critical")
+
+        # If rules triggered escalation, ensure the explanation is surfaced prominently
+        if is_escalated and rule_eval["triggered_reasons"]:
+            for reason in reversed(rule_eval["triggered_reasons"]):
+                if not any(reason.lower() in f.lower() for f in contributing_factors):
+                    contributing_factors.insert(0, reason)
+            contributing_factors = contributing_factors[:3]
 
         computed_at = datetime.datetime.now(datetime.timezone.utc)
         risk_score_id: Optional[str] = None
 
-        # 5. Optional DB Persistence
+        # 6. Optional DB Persistence
         if save_to_db:
             score_record = RiskScore(
                 id=uuid.uuid4(),
                 pseudonymous_id=pid_uuid,
                 computed_at=computed_at,
                 probability_score=probability_score,
-                calibrated_score=calibrated_score,
-                risk_category=risk_category,
+                calibrated_score=final_score,
+                risk_category=final_category,
                 contributing_factors=contributing_factors,
-                rule_flags={},
+                rule_flags=rule_flags,
             )
             db.add(score_record)
             db.commit()
@@ -339,13 +361,16 @@ def compute_risk(
         return {
             "pseudonymous_id": pid_str,
             "probability_score": probability_score,
-            "calibrated_score": calibrated_score,
-            "risk_category": risk_category,
-            "risk_tier": risk_category,
+            "raw_calibrated_score": raw_calibrated_score,
+            "calibrated_score": final_score,
+            "raw_risk_category": raw_risk_category,
+            "risk_category": final_category,
+            "risk_tier": final_category,
             "welfare_concern_30d": welfare_concern,
             "contributing_factors": contributing_factors,
             "features": features,
-            "rule_flags": {},
+            "rule_flags": rule_flags,
+            "escalated_by_rules": is_escalated,
             "as_of_date": effective_as_of.isoformat(),
             "computed_at": computed_at,
             "risk_score_id": risk_score_id,
