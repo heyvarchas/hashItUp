@@ -33,6 +33,7 @@ def send_alert_email(
     recipient_email: Optional[str] = None,
     smtp_host: Optional[str] = None,
     smtp_port: Optional[int] = None,
+    timeout: float = 5.0,
 ) -> bool:
     """
     Sends an alert notification email using smtplib.
@@ -46,6 +47,7 @@ def send_alert_email(
         recipient_email: Destination email address.
         smtp_host: SMTP server hostname.
         smtp_port: SMTP server port.
+        timeout: Socket timeout in seconds.
 
     Returns:
         bool: True if email was successfully dispatched, False otherwise.
@@ -110,7 +112,7 @@ Review the welfare queue immediately via the Welfare Officer portal.
     msg.attach(MIMEText(body_html, "html"))
 
     try:
-        with smtplib.SMTP(host, port, timeout=5) as server:
+        with smtplib.SMTP(host, port, timeout=timeout) as server:
             if use_tls:
                 server.starttls()
             if username and password:
@@ -119,5 +121,5 @@ Review the welfare queue immediately via the Welfare Officer portal.
         return True
     except Exception as e:
         # In testing/dev or if SMTP server is unavailable, log and return False gracefully
-        print(f"[send_alert_email error] Failed to send email via {host}:{port}: {e}")
+        print(f"[send_alert_email info] Notice: Email dispatch to {host}:{port} skipped/unavailable ({e})")
         return False
