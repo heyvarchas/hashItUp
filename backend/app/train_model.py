@@ -102,13 +102,28 @@ class WelfareRiskModel:
         probs = self.calibrated_model.predict_proba(X_df)[:, 1]
         return probs
 
-    def predict_risk_score(self, X: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
+    def explain_factors(self, X: Union[pd.DataFrame, pd.Series, Dict[str, Any]], top_k: int = 3) -> List[str]:
+        """Returns top K plain-language contributing factors for an individual."""
+        from app.explainability import get_top_contributing_factors
+        if isinstance(X, pd.DataFrame):
+            row = X.iloc[0]
+        else:
+            row = X
+        return get_top_contributing_factors(
+            features=row,
+            feature_medians=self.feature_medians,
+            feature_stds=self.feature_stds,
+            top_k=top_k,
+        )
+
+    def predict_risk_score(self, X: Union[pd.DataFrame, pd.Series, Dict[str, Any]], top_k: int = 3) -> Dict[str, Any]:
         """
-        Returns full calibrated prediction for an individual:
+        Returns full calibrated prediction with plain-language contributing factors:
         - probability_score: float in [0.0, 1.0]
         - calibrated_score: integer in [0, 100]
         - risk_tier: 'low' | 'moderate' | 'high' | 'critical'
         - welfare_concern_30d: bool
+        - contributing_factors: List[str]
         """
         prob = float(self.predict_proba(X)[0])
         calibrated_score = int(round(prob * 100))
@@ -124,12 +139,14 @@ class WelfareRiskModel:
             risk_tier = "low"
 
         welfare_concern = risk_tier in ("high", "critical") or prob >= 0.50
+        factors = self.explain_factors(X, top_k=top_k)
 
         return {
             "probability_score": round(prob, 4),
             "calibrated_score": calibrated_score,
             "risk_tier": risk_tier,
             "welfare_concern_30d": welfare_concern,
+            "contributing_factors": factors,
         }
 
     def save(self, filepath: Union[str, Path]) -> None:
