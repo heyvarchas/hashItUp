@@ -171,3 +171,32 @@ class InterventionOut(BaseModel):
     notes: Optional[str] = None
     recorded_at: datetime
     alert_status: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Dashboard / Unit Summary (Phase 9.3)
+# ---------------------------------------------------------------------------
+
+class RiskCategoryStat(BaseModel):
+    category: str
+    label: str
+    count: int
+    percentage: float
+    color: str
+
+
+class UnitSummaryOut(BaseModel):
+    """
+    Output for GET /dashboard/unit-summary.
+    Aggregated statistical summary across unit personnel.
+    Strictly contains NO individual pseudonymous_ids or identifiable records.
+    """
+    total_personnel: int
+    average_calibrated_score: float
+    distribution: list[RiskCategoryStat]
+    critical_count: int
+    high_count: int
+    moderate_count: int
+    low_count: int
+    open_alerts_count: int
+    acknowledged_alerts_count: int
