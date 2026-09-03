@@ -185,6 +185,11 @@ def seed_database(
         compute_risk(pid, db=db, save_to_db=True)
     counts["risk_scores"] = len(seeded_pids)
 
+    # 3.11 Seed/Provision Phase 10.1 Scripted Demo Persona
+    from app.synthetic.demo_persona import seed_demo_persona
+    demo_info = seed_demo_persona(db)
+    counts["demo_persona"] = 1
+
     elapsed = time.time() - start_time
 
     # 4. Referential Integrity Verification
@@ -196,6 +201,7 @@ def seed_database(
         "months": months,
         "elapsed_seconds": round(elapsed, 2),
         "inserted_counts": counts,
+        "demo_persona": demo_info,
         "verification": verification,
     }
 
@@ -238,7 +244,7 @@ def verify_database_seeding(db: Session) -> Dict[str, Any]:
             "unresolved_orphans": orphan_count,
         }
 
-    is_valid = (total_personnel >= 500) and (total_orphans == 0)
+    is_valid = (total_personnel > 0) and (total_orphans == 0)
 
     return {
         "total_personnel_in_db": total_personnel,

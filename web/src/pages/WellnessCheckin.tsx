@@ -180,6 +180,27 @@ export const WellnessCheckin: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Demo Scenario Quick-Fill Bar */}
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-3 flex items-center justify-between gap-3">
+              <div className="text-left">
+                <span className="text-[11px] font-bold text-indigo-300 block uppercase tracking-wider">Demo / Rehearsal Helper</span>
+                <span className="text-xs text-slate-400">Pre-fill pre-planned assessment to tip persona over into high alert</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMood(1);
+                  setSleep(1);
+                  setStress(9);
+                  setHelpRequested(false);
+                  setFreeTextNote('Severe exhaustion, chronic sleep disturbance and feeling unable to cope.');
+                }}
+                className="px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shrink-0 transition"
+              >
+                Pre-fill Demo Scenario
+              </button>
+            </div>
+
             {/* Mood Slider */}
             <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4.5 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
