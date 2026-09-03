@@ -201,8 +201,19 @@ class RiskScore(Base):
     contributing_factors = Column(JSONB, nullable=True)
     rule_flags = Column(JSONB, nullable=True)
 
-    recommendations = relationship("Recommendation", back_populates="risk_score")
-    alerts = relationship("Alert", back_populates="risk_score")
+    recommendations = relationship(
+        "Recommendation",
+        back_populates="risk_score",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    alerts = relationship(
+        "Alert",
+        back_populates="risk_score",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
 
 
 class Recommendation(Base):

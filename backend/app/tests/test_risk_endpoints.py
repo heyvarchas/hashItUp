@@ -66,11 +66,13 @@ class TestRiskEndpoints(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.db.execute(text("DELETE FROM analytics.recommendations WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id = :pid)"), {"pid": cls.test_pid})
         cls.db.execute(text("DELETE FROM analytics.risk_scores WHERE pseudonymous_id = :pid"), {"pid": cls.test_pid})
         cls.db.execute(text("DELETE FROM analytics.wellness_assessments WHERE pseudonymous_id = :pid"), {"pid": cls.test_pid})
         cls.db.execute(text("DELETE FROM identity.personnel WHERE pseudonymous_id = :pid"), {"pid": cls.test_pid})
         cls.db.commit()
         cls.db.close()
+
 
     # -------------------------------------------------------------------------
     # 1. RBAC Tests

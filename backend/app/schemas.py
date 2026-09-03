@@ -114,6 +114,20 @@ class RiskScoreOut(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Recommendations
+# ---------------------------------------------------------------------------
+
+class RecommendationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    risk_score_id: uuid.UUID
+    recommendation_type: str
+    rationale: Optional[str] = None
+    generated_at: datetime
+
+
+# ---------------------------------------------------------------------------
 # Alerts
 # ---------------------------------------------------------------------------
 

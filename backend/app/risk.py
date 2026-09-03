@@ -28,13 +28,16 @@ from app.models import (
     Deployment,
     DutyRecord,
     LeaveRecord,
+    Recommendation,
     RiskScore,
     TrainingRecord,
     Transfer,
     WellnessAssessment,
 )
+from app.recommendations import evaluate_recommendations
 from app.train_model import WelfareRiskModel
 from app.rules import evaluate_deterministic_rules
+
 
 # Module-level model cache
 _LOADED_MODEL: Optional[WelfareRiskModel] = None
@@ -338,10 +341,17 @@ def compute_risk(
                     contributing_factors.insert(0, reason)
             contributing_factors = contributing_factors[:3]
 
+        # 6. Recommendation Evaluation (Phase 7.1)
+        recommendations = evaluate_recommendations(
+            features=features,
+            risk_category=final_category,
+            risk_score=final_score,
+        )
+
         computed_at = datetime.datetime.now(datetime.timezone.utc)
         risk_score_id: Optional[str] = None
 
-        # 6. Optional DB Persistence
+        # 7. Optional DB Persistence
         if save_to_db:
             score_record = RiskScore(
                 id=uuid.uuid4(),
@@ -354,6 +364,18 @@ def compute_risk(
                 rule_flags=rule_flags,
             )
             db.add(score_record)
+            db.flush()
+
+            for rec in recommendations:
+                rec_record = Recommendation(
+                    id=uuid.uuid4(),
+                    risk_score_id=score_record.id,
+                    recommendation_type=rec["recommendation_type"],
+                    rationale=rec["rationale"],
+                    generated_at=computed_at,
+                )
+                db.add(rec_record)
+
             db.commit()
             db.refresh(score_record)
             risk_score_id = str(score_record.id)
@@ -370,6 +392,7 @@ def compute_risk(
             "contributing_factors": contributing_factors,
             "features": features,
             "rule_flags": rule_flags,
+            "recommendations": recommendations,
             "escalated_by_rules": is_escalated,
             "as_of_date": effective_as_of.isoformat(),
             "computed_at": computed_at,

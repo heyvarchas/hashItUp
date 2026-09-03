@@ -183,10 +183,12 @@ class TestRuleEngine(unittest.TestCase):
 
         finally:
             # Cleanup test records
+            self.db.execute(text("DELETE FROM analytics.recommendations WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id = :pid)"), {"pid": test_pid})
             self.db.execute(text("DELETE FROM analytics.risk_scores WHERE pseudonymous_id = :pid"), {"pid": test_pid})
             self.db.execute(text("DELETE FROM analytics.wellness_assessments WHERE pseudonymous_id = :pid"), {"pid": test_pid})
             self.db.execute(text("DELETE FROM identity.personnel WHERE pseudonymous_id = :pid"), {"pid": test_pid})
             self.db.commit()
+
 
 
 if __name__ == "__main__":
