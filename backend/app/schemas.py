@@ -144,3 +144,30 @@ class AlertOut(BaseModel):
     calibrated_score: Optional[int] = None
     risk_category: Optional[str] = None
     contributing_factors: Optional[list[Any]] = None
+
+
+# ---------------------------------------------------------------------------
+# Interventions
+# ---------------------------------------------------------------------------
+
+class InterventionCreate(BaseModel):
+    """
+    Input for POST /interventions (Phase 9.2).
+    Welfare Officer records an intervention action and updates the alert's triage status.
+    """
+    alert_id: uuid.UUID
+    intervention_type: str
+    notes: Optional[str] = None
+    new_alert_status: Optional[str] = Field(default="resolved", description="Target alert status: 'acknowledged' or 'resolved'")
+
+
+class InterventionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    alert_id: uuid.UUID
+    recorded_by_person_id: uuid.UUID
+    intervention_type: str
+    notes: Optional[str] = None
+    recorded_at: datetime
+    alert_status: Optional[str] = None

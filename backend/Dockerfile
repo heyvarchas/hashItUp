@@ -4,8 +4,11 @@ WORKDIR /app
 
 # Install dependencies first so Docker can cache this layer
 # and rebuilds are fast when only app code changes.
+# Grab prebuilt uv binary directly from official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system -r requirements.txt
 
 # Copy application code and migrations
 COPY app ./app

@@ -12,7 +12,7 @@ services:
     volumes:
       - welfare_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-welfare_admin}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-welfare_admin} -d ${POSTGRES_DB:-welfare_db}"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -15,6 +15,7 @@ from app.hr import router as hr_router
 from app.wellness import router as wellness_router
 from app.risk_api import router as risk_router
 from app.alerts_api import router as alerts_router
+from app.interventions_api import router as interventions_router
 from app.jwt_auth import get_current_user_claims, require_roles
 from app.risk import load_risk_model
 
@@ -53,6 +54,8 @@ app.include_router(hr_router)
 app.include_router(wellness_router)
 app.include_router(risk_router)
 app.include_router(alerts_router)
+app.include_router(interventions_router)
+
 
 
 
