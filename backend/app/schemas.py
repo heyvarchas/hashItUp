@@ -89,6 +89,20 @@ class WellnessAssessmentOut(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Recommendations
+# ---------------------------------------------------------------------------
+
+class RecommendationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    risk_score_id: uuid.UUID
+    recommendation_type: str
+    rationale: Optional[str] = None
+    generated_at: datetime
+
+
+# ---------------------------------------------------------------------------
 # Risk Scores
 # ---------------------------------------------------------------------------
 
@@ -111,20 +125,7 @@ class RiskScoreOut(BaseModel):
     risk_category: str
     contributing_factors: Optional[list[Any]] = None
     rule_flags: Optional[dict[str, Any]] = None
-
-
-# ---------------------------------------------------------------------------
-# Recommendations
-# ---------------------------------------------------------------------------
-
-class RecommendationOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    risk_score_id: uuid.UUID
-    recommendation_type: str
-    rationale: Optional[str] = None
-    generated_at: datetime
+    recommendations: Optional[list[RecommendationOut]] = None
 
 
 # ---------------------------------------------------------------------------

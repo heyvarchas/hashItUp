@@ -61,10 +61,19 @@ def get_alerts_queue(
     if severity_filter:
         query = query.filter(Alert.severity == severity_filter.lower())
 
+    from sqlalchemy import case
+
+    severity_order = case(
+        (Alert.severity == "critical", 1),
+        (Alert.severity == "high", 2),
+        (Alert.severity == "moderate", 3),
+        (Alert.severity == "info", 4),
+        else_=5,
+    )
+
     # Order by severity priority (critical first) then newest created
-    # Postgres CASE or created_at desc
     results = (
-        query.order_by(Alert.created_at.desc())
+        query.order_by(severity_order, Alert.created_at.desc())
         .offset(offset)
         .limit(limit)
         .all()
@@ -87,3 +96,38 @@ def get_alerts_queue(
         )
 
     return alerts_out
+
+
+@router.get(
+    "/{alert_id}",
+    response_model=AlertOut,
+    summary="Get Single Alert Details (Welfare Officers / Admin)",
+    description="Retrieves a specific alert by alert_id enriched with risk score details.",
+)
+def get_alert_detail(
+    alert_id: uuid.UUID,
+    claims: dict = Depends(require_roles(["welfare_officer", "admin"])),
+    db: Session = Depends(get_db),
+):
+    """
+    Officer-facing endpoint to inspect a specific alert by its ID.
+    """
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+    if not alert:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Alert with ID {alert_id} not found",
+        )
+
+    score = alert.risk_score
+    return AlertOut(
+        id=alert.id,
+        risk_score_id=alert.risk_score_id,
+        severity=alert.severity,
+        status=alert.status,
+        created_at=alert.created_at,
+        pseudonymous_id=score.pseudonymous_id if score else None,
+        calibrated_score=int(score.calibrated_score) if score else None,
+        risk_category=score.risk_category if score else None,
+        contributing_factors=score.contributing_factors if score else None,
+    )
