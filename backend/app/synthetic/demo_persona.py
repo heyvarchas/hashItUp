@@ -112,6 +112,9 @@ def seed_demo_persona(
         person.unit_id = unit.unit_id
         db.flush()
 
+    # 1.1 Also ensure demo Welfare Officer and Admin accounts exist for the walkthrough
+    _ensure_officer_and_admin_accounts(db, unit.unit_id)
+
     pid = person.pseudonymous_id
 
     # 2. Clean existing analytics data for this persona in correct FK order
@@ -247,3 +250,63 @@ def reset_demo_persona(db: Optional[Session] = None) -> Dict[str, Any]:
     finally:
         if own_session:
             db.close()
+
+
+def _ensure_officer_and_admin_accounts(db: Session, unit_id: Optional[uuid.UUID] = None) -> None:
+    """Ensures standard demo welfare officer and admin accounts exist with known credentials."""
+    # 1. Welfare Officer
+    officer_sn = "CAPF-2024-002"
+    officer = db.query(Personnel).filter(Personnel.service_number == officer_sn).first()
+    if not officer:
+        officer = Personnel(
+            person_id=uuid.uuid4(),
+            service_number=officer_sn,
+            password_hash=hash_password("password456"),
+            rank="Inspector",
+            unit_id=unit_id,
+            pseudonymous_id=uuid.uuid4(),
+            active=True,
+            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=180),
+        )
+        db.add(officer)
+        db.flush()
+        db.add(UserRole(person_id=officer.person_id, role="welfare_officer"))
+        db.flush()
+    else:
+        officer.password_hash = hash_password("password456")
+        officer.active = True
+        # Ensure role is welfare_officer
+        role_record = db.query(UserRole).filter(UserRole.person_id == officer.person_id).first()
+        if role_record:
+            role_record.role = "welfare_officer"
+        else:
+            db.add(UserRole(person_id=officer.person_id, role="welfare_officer"))
+        db.flush()
+
+    # 2. Administrator
+    admin_sn = "ADMIN-001"
+    admin = db.query(Personnel).filter(Personnel.service_number == admin_sn).first()
+    if not admin:
+        admin = Personnel(
+            person_id=uuid.uuid4(),
+            service_number=admin_sn,
+            password_hash=hash_password("admin123"),
+            rank="Colonel",
+            unit_id=unit_id,
+            pseudonymous_id=uuid.uuid4(),
+            active=True,
+            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=180),
+        )
+        db.add(admin)
+        db.flush()
+        db.add(UserRole(person_id=admin.person_id, role="admin"))
+        db.flush()
+    else:
+        admin.password_hash = hash_password("admin123")
+        admin.active = True
+        role_record = db.query(UserRole).filter(UserRole.person_id == admin.person_id).first()
+        if role_record:
+            role_record.role = "admin"
+        else:
+            db.add(UserRole(person_id=admin.person_id, role="admin"))
+        db.flush()
