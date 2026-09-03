@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app.db import SessionLocal
 from app.jwt_auth import create_access_token
 from app.main import app
-from app.models import Personnel, UserRole, WellnessAssessment
+from app.models import Personnel, RiskScore, UserRole, WellnessAssessment
 from app.security import hash_password
 
 
@@ -101,8 +101,10 @@ class TestWellnessAssessmentSubmissionAndHistory(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         try:
-            # Clean up all assessments created for test personnel
+            # Clean up all assessments and risk scores created for test personnel
             test_pseudo_ids = [cls.p1_pseudo_id, cls.p2_pseudo_id, cls.w_pseudo_id, cls.a_pseudo_id]
+            cls.db.execute(text("DELETE FROM analytics.risk_scores WHERE pseudonymous_id NOT IN (SELECT pseudonymous_id FROM identity.personnel);"))
+            cls.db.query(RiskScore).filter(RiskScore.pseudonymous_id.in_(test_pseudo_ids)).delete(synchronize_session=False)
             cls.db.query(WellnessAssessment).filter(WellnessAssessment.pseudonymous_id.in_(test_pseudo_ids)).delete(synchronize_session=False)
 
             # Clean up roles and personnel

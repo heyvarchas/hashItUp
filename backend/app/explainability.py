@@ -260,3 +260,117 @@ def get_top_contributing_factors(
         top_factors.append("Workload metrics within standard operational baseline (population median: 9.4 hrs)")
 
     return top_factors[:top_k]
+
+
+def convert_to_supportive_factor(factor: str) -> str:
+    """
+    Translates clinical/officer-facing risk factor strings into supportive,
+    non-alarming personnel-facing wording per Section 29 specifications.
+    """
+    import re
+    f_lower = factor.lower()
+
+    if "explicit request for welfare assistance" in f_lower or "personnel explicitly requested" in f_lower or "requested welfare assistance" in f_lower or "help requested" in f_lower:
+        return "You have an active request for welfare assistance — our team is here to support you."
+
+    if "sudden drop in self-reported wellness" in f_lower or "sudden drop" in f_lower:
+        return "Noticeable recent change in your self-reported wellness ratings — prioritize self-care."
+
+    if "consecutive night shifts" in f_lower:
+        match = re.search(r"(\d+)\s+consecutive night shifts", factor, re.IGNORECASE)
+        n = match.group(1) if match else "Multiple"
+        return f"{n} consecutive night shifts completed — prioritize rest and recovery."
+
+    if "days since last leave" in f_lower or "period without leave" in f_lower:
+        match = re.search(r"(\d+)\s+days since last leave", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} days since your last leave — consider scheduling time off to recharge."
+        return "Extended time on duty without leave — consider scheduling leave soon."
+
+    if "days on active deployment" in f_lower or "operational deployment" in f_lower or "continuous deployment" in f_lower:
+        match = re.search(r"(\d+)\s+days on active deployment", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} days on active deployment — sustained operational tempo."
+        return "Active operational deployment — sustained operational tempo."
+
+    if "high hardship zone" in f_lower or "hardship" in f_lower:
+        return "Demanding operational environment during current deployment."
+
+    if "poor sleep quality" in f_lower or "sleep quality" in f_lower:
+        return "Lower sleep quality reported recently — focus on restful recovery habits."
+
+    if "low self-reported mood" in f_lower or "mood score" in f_lower:
+        return "Lower mood reported recently — reach out to colleagues or support networks."
+
+    if "high self-reported stress" in f_lower or "stress rating" in f_lower:
+        return "Higher stress levels reported recently — take time to decompress."
+
+    if "avg daily duty hours" in f_lower or "duty hours per shift" in f_lower:
+        match = re.search(r"([\d\.]+)\s+avg daily duty hours", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} average daily duty hours per shift."
+        return "High daily shift duty hours."
+
+    if "total duty hours in past 4 weeks" in f_lower or "total duty hours" in f_lower:
+        match = re.search(r"([\d\.]+)\s+total duty hours", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} total duty hours in the past month."
+        return "High total monthly duty hours."
+
+    if "unit transfers" in f_lower:
+        match = re.search(r"(\d+)\s+unit transfers", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} unit transitions in the past year — adapting to new environments."
+        return "Recent unit transitions."
+
+    if "training hours" in f_lower:
+        match = re.search(r"([\d\.]+)\s+training hours", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} training hours completed in the past month."
+        return "Significant training load committed recently."
+
+    if "schedule irregularity" in f_lower:
+        return "Varied and fluctuating duty schedule — maintain steady routines where possible."
+
+    if "workload increased by" in f_lower:
+        match = re.search(r"workload increased by\s+([+\-\d]+%)", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"Workload increased by {n} compared to previous month."
+        return "Workload increased compared to previous month."
+
+    if "leave utilization rate" in f_lower:
+        return "Low leave utilization — take advantage of available leave."
+
+    if "days since last wellness submission" in f_lower or "wellness check-in" in f_lower:
+        match = re.search(r"(\d+)\s+days since last wellness submission", factor, re.IGNORECASE)
+        n = match.group(1) if match else None
+        if n:
+            return f"{n} days since your last wellness check-in."
+        return "Time since last wellness check-in."
+
+    if "declining wellness mood trend" in f_lower:
+        return "Wellness mood has trended lower recently."
+
+    if "deteriorating sleep quality trend" in f_lower:
+        return "Sleep quality has trended lower recently."
+
+    if "escalating stress rating trend" in f_lower:
+        return "Stress self-ratings have trended higher recently."
+
+    if "within standard operational baseline" in f_lower:
+        return "Workload and wellness metrics are within standard healthy baseline."
+
+    return factor
+
+
+def convert_to_supportive_factors(factors: List[str]) -> List[str]:
+    """Converts a list of contributing factors to supportive personnel-facing framing."""
+    return [convert_to_supportive_factor(f) for f in factors]
+
