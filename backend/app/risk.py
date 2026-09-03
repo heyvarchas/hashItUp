@@ -36,9 +36,11 @@ from app.models import (
     WellnessAssessment,
 )
 
+from app.mailer import send_alert_email
 from app.recommendations import evaluate_recommendations
 from app.train_model import WelfareRiskModel
 from app.rules import evaluate_deterministic_rules
+
 
 
 # Module-level model cache
@@ -378,7 +380,7 @@ def compute_risk(
                 )
                 db.add(rec_record)
 
-            # 8. Alert Creation + Deduplication (Phase 7.2)
+            # 8. Alert Creation + Deduplication (Phase 7.2 & 7.3)
             # When risk crosses into high or critical, create an analytics.alerts row
             # but first check for an existing status='open' alert for that person and update/skip
             if final_category in ("high", "critical"):
@@ -398,6 +400,7 @@ def compute_risk(
                     # Update existing open alert to link to newest risk_score and update severity if needed
                     existing_open_alert.risk_score_id = score_record.id
                     existing_open_alert.severity = final_category
+                    alert_target_id = existing_open_alert.id
                 else:
                     # Create new open alert
                     new_alert = Alert(
@@ -408,10 +411,21 @@ def compute_risk(
                         created_at=computed_at,
                     )
                     db.add(new_alert)
+                    alert_target_id = new_alert.id
+
+                # Dispatch alert notification email (Phase 7.3)
+                send_alert_email(
+                    alert_id=alert_target_id,
+                    pseudonymous_id=pid_uuid,
+                    severity=final_category,
+                    calibrated_score=final_score,
+                    contributing_factors=contributing_factors,
+                )
 
             db.commit()
             db.refresh(score_record)
             risk_score_id = str(score_record.id)
+
 
 
         return {

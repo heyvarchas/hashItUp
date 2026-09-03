@@ -281,6 +281,127 @@ class TestAlertCreationAndDeduplication(unittest.TestCase):
             self.db.execute(text("DELETE FROM identity.personnel WHERE pseudonymous_id = :pid"), {"pid": test_pid})
             self.db.commit()
 
+    def test_get_alerts_queue_endpoint_rbac_and_filtering(self):
+        """
+        Phase 7.3 Done When:
+        Building GET /alerts (welfare_officer, admin only).
+        Validates RBAC restrictions and status/severity filter parameters.
+        """
+        from fastapi.testclient import TestClient
+        from app.jwt_auth import create_access_token
+        from app.main import app
+
+        client = TestClient(app)
+
+        # Generate tokens
+        welfare_token = create_access_token(
+            person_id=str(uuid.uuid4()),
+            pseudonymous_id=str(uuid.uuid4()),
+            role="welfare_officer",
+        )
+        personnel_token = create_access_token(
+            person_id=str(uuid.uuid4()),
+            pseudonymous_id=str(uuid.uuid4()),
+            role="personnel",
+        )
+
+        # 1. Personnel cannot access GET /alerts -> 403 Forbidden
+        resp_p = client.get("/alerts", headers={"Authorization": f"Bearer {personnel_token}"})
+        self.assertEqual(resp_p.status_code, 403)
+
+        # 2. Welfare officer can access GET /alerts -> 200 OK
+        resp_w = client.get("/alerts", headers={"Authorization": f"Bearer {welfare_token}"})
+        self.assertEqual(resp_w.status_code, 200)
+        self.assertIsInstance(resp_w.json(), list)
+
+        # 3. Create test personnel and alert
+        test_sn = f"SN-ALERT-QUEUE-{uuid.uuid4().hex[:6].upper()}"
+        test_pid = uuid.uuid4()
+        person = Personnel(
+            service_number=test_sn,
+            password_hash="test_hash",
+            pseudonymous_id=test_pid,
+            active=True,
+        )
+        self.db.add(person)
+        self.db.commit()
+
+        try:
+            assessment = WellnessAssessment(
+                id=uuid.uuid4(),
+                pseudonymous_id=test_pid,
+                submitted_at=datetime.datetime.now(datetime.timezone.utc),
+                mood_score=1,
+                sleep_quality_score=1,
+                stress_self_rating=10,
+                help_requested=True,
+            )
+            self.db.add(assessment)
+            self.db.commit()
+
+            res = compute_risk(test_pid, db=self.db, save_to_db=True)
+            self.assertEqual(res["risk_category"], "critical")
+
+            # Query queue via API
+            resp_queue = client.get("/alerts?status=open", headers={"Authorization": f"Bearer {welfare_token}"})
+            self.assertEqual(resp_queue.status_code, 200)
+            queue_data = resp_queue.json()
+
+            matched = [a for a in queue_data if a.get("pseudonymous_id") == str(test_pid)]
+            self.assertEqual(len(matched), 1)
+            alert_item = matched[0]
+            self.assertEqual(alert_item["status"], "open")
+            self.assertEqual(alert_item["severity"], "critical")
+            self.assertGreaterEqual(alert_item["calibrated_score"], 85)
+            self.assertIsNotNone(alert_item["contributing_factors"])
+
+        finally:
+            self.db.execute(text("DELETE FROM analytics.alerts WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id = :pid)"), {"pid": test_pid})
+            self.db.execute(text("DELETE FROM analytics.recommendations WHERE risk_score_id IN (SELECT id FROM analytics.risk_scores WHERE pseudonymous_id = :pid)"), {"pid": test_pid})
+            self.db.execute(text("DELETE FROM analytics.risk_scores WHERE pseudonymous_id = :pid"), {"pid": test_pid})
+            self.db.execute(text("DELETE FROM analytics.wellness_assessments WHERE pseudonymous_id = :pid"), {"pid": test_pid})
+            self.db.execute(text("DELETE FROM identity.personnel WHERE pseudonymous_id = :pid"), {"pid": test_pid})
+            self.db.commit()
+
+    def test_send_alert_email_functionality(self):
+        """
+        Phase 7.3: Validates send_alert_email function structure, parameters,
+        and graceful handling when test SMTP server is simulated.
+        """
+        from unittest.mock import MagicMock, patch
+        from app.mailer import send_alert_email
+
+        test_alert_id = uuid.uuid4()
+        test_pid = uuid.uuid4()
+
+        with patch("smtplib.SMTP") as mock_smtp:
+            mock_instance = MagicMock()
+            mock_smtp.return_value.__enter__.return_value = mock_instance
+
+            # Send email
+            sent = send_alert_email(
+                alert_id=test_alert_id,
+                pseudonymous_id=test_pid,
+                severity="critical",
+                calibrated_score=92,
+                contributing_factors=["Explicit request for welfare assistance", "Prolonged deployment"],
+                recipient_email="duty_officer@welfare.mil",
+                smtp_host="localhost",
+                smtp_port=1025,
+            )
+
+            self.assertTrue(sent)
+            mock_smtp.assert_called_with("localhost", 1025, timeout=5)
+            self.assertTrue(mock_instance.sendmail.called)
+
+            args, kwargs = mock_instance.sendmail.call_args
+            from_addr, to_addrs, msg_str = args
+            self.assertEqual(to_addrs, ["duty_officer@welfare.mil"])
+            self.assertIn("CRITICAL ALERT", msg_str)
+            self.assertIn(str(test_pid), msg_str)
+            self.assertIn("Explicit request for welfare assistance", msg_str)
+
 
 if __name__ == "__main__":
     unittest.main()
+

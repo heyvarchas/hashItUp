@@ -139,3 +139,7 @@ class AlertOut(BaseModel):
     severity: str
     status: str
     created_at: datetime
+    pseudonymous_id: Optional[uuid.UUID] = None
+    calibrated_score: Optional[int] = None
+    risk_category: Optional[str] = None
+    contributing_factors: Optional[list[Any]] = None
