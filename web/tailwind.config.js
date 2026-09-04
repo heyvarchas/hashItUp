@@ -7,6 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
+        'command-blue': '#2965A8',
+        'readiness-green': '#2E8B68',
         field: {
           bg: '#0B0F13',
           surface: '#131A21',

@@ -31,7 +31,7 @@ from pathlib import Path
 logger = logging.getLogger("uvicorn")
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app_instance: FastAPI):
     """
     Lifespan event handler for FastAPI.
     1. Runs database migrations (alembic upgrade head) so tables exist on fresh DB boots.
@@ -42,7 +42,8 @@ async def lifespan(app: FastAPI):
     try:
         from alembic.config import Config
         from alembic import command
-        from app.db import DATABASE_URL, SessionLocal
+        from app.db import DATABASE_URL, SessionLocal, Base, engine
+        import app.models  # noqa: F401
 
         alembic_ini_path = Path(__file__).resolve().parent.parent / "alembic.ini"
         if alembic_ini_path.exists():
@@ -51,8 +52,12 @@ async def lifespan(app: FastAPI):
             alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
             command.upgrade(alembic_cfg, "head")
             logger.info("Database migrations applied successfully.")
+        
+        # Ensure all tables in models.py exist
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified.")
     except Exception as e:
-        logger.warning(f"Could not apply migrations during startup: {e}")
+        logger.warning(f"Could not apply migrations/create tables during startup: {e}")
 
     # 2. Check and seed demo persona / test credentials if DB is unseeded
     try:
@@ -80,11 +85,11 @@ async def lifespan(app: FastAPI):
 
     # 4. Load legacy ML model if present (fallback)
     try:
-        app.state.risk_model = load_risk_model()
+        app_instance.state.risk_model = load_risk_model()
         logger.info("Calibrated XGBoost risk model loaded successfully.")
     except Exception as e:
         logger.warning(f"Could not load risk model artifact during startup: {e}")
-        app.state.risk_model = None
+        app_instance.state.risk_model = None
     yield
 
 
