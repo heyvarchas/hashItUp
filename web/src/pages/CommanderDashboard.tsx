@@ -782,16 +782,9 @@ export const CommanderDashboard: React.FC = () => {
       <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1 text-xs text-field-muted font-mono uppercase tracking-wider">
-              <Shield className="w-4 h-4 text-command-blue" />
+            <div className="flex items-center gap-2 mb-1.5 text-xs text-field-muted font-mono uppercase tracking-wider whitespace-nowrap">
+              <Shield className="w-4 h-4 text-command-blue shrink-0" />
               <span>Operational Command Console • Sector 4</span>
-              <span className="text-field-border">•</span>
-              <span className="px-2 py-0.5 rounded bg-blue-950/60 border border-command-blue/40 text-command-blue font-semibold text-[10px]">
-                RBAC: Commander
-              </span>
-              <span className="px-2 py-0.5 rounded bg-field-surface-subtle border border-field-border text-field-muted text-[10px] hidden sm:inline-block">
-                Aggregate Privacy Protected
-              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-field-primary tracking-tight flex items-center gap-3">
               <span>{data.unit_name}</span>
