@@ -273,3 +273,55 @@ class Intervention(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())
 
     alert = relationship("Alert", back_populates="interventions")
+
+
+class ChangeRequest(Base):
+    __tablename__ = "change_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "request_type IN ('leave', 'increase_workers', 'decrease_workers', 'transfer', 'shift_change')",
+            name="ck_change_requests_type_valid",
+        ),
+        CheckConstraint(
+            "status IN ('PENDING', 'APPROVED', 'REJECTED')",
+            name="ck_change_requests_status_valid",
+        ),
+        {"schema": "analytics"},
+    )
+
+    request_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    person_id = Column(String, nullable=False, index=True)  # e.g., 'P0056' or service number
+    request_type = Column(String, nullable=False)
+    request_details = Column(JSONB, nullable=False, default=dict)
+    reason = Column(Text, nullable=False)
+    status = Column(String, nullable=False, default="PENDING")
+    
+    # Snapshot at submission time
+    risk_score_at_submission = Column(SmallInteger, nullable=False, default=0)
+    stress_score_at_submission = Column(SmallInteger, nullable=False, default=0)
+    contributing_factors_at_submission = Column(JSONB, nullable=True)
+    system_recommendation = Column(String, nullable=False, default="")
+    recommendation_reason = Column(Text, nullable=True)
+    
+    # Officer decision
+    officer_decision = Column(String, nullable=True)  # 'APPROVED' or 'REJECTED'
+    officer_reason = Column(Text, nullable=True)
+    decided_by_person_id = Column(String, nullable=True)
+    
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    notification_status = Column(String, nullable=False, default="UNREAD")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = {"schema": "analytics"}
+
+    notification_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    recipient_id = Column(String, nullable=False, index=True)  # person_id or 'welfare_officer'
+    recipient_role = Column(String, nullable=True)  # 'personnel' or 'welfare_officer'
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    request_id = Column(UUID(as_uuid=True), nullable=True)
+    is_read = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

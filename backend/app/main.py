@@ -18,6 +18,7 @@ from app.alerts_api import router as alerts_router
 from app.interventions_api import router as interventions_router
 from app.dashboard_api import router as dashboard_router
 from app.dataset_api import router as dataset_router
+from app.requests_api import router as requests_router
 from app.jwt_auth import get_current_user_claims, require_roles
 from app.risk import load_risk_model
 from app.master_data import master_manager
@@ -113,6 +114,7 @@ app.include_router(risk_router)
 app.include_router(alerts_router)
 app.include_router(interventions_router)
 app.include_router(dashboard_router)
+app.include_router(requests_router)
 
 
 

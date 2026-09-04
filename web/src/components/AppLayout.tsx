@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Shield, FileText, BarChart2, AlertCircle } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -164,6 +165,9 @@ export const AppLayout: React.FC = () => {
 
           {/* Session Info & Sign Out */}
           <div className="flex items-center gap-3">
+            {/* In-App Notification Bell */}
+            <NotificationBell />
+
             <div className="text-right hidden md:block text-xs">
               <span className="text-readiness-green font-medium flex items-center gap-1 justify-end">
                 <span className="w-1.5 h-1.5 rounded-full bg-readiness-green" />

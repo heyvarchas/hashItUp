@@ -200,3 +200,54 @@ class UnitSummaryOut(BaseModel):
     low_count: int
     open_alerts_count: int
     acknowledged_alerts_count: int
+
+
+# ---------------------------------------------------------------------------
+# Change Requests & Notifications
+# ---------------------------------------------------------------------------
+
+class ChangeRequestCreate(BaseModel):
+    request_type: str = Field(description="'leave', 'increase_workers', 'decrease_workers', 'transfer', or 'shift_change'")
+    request_details: dict[str, Any] = Field(default_factory=dict)
+    reason: str
+    additional_note: Optional[str] = None
+
+
+class ChangeRequestDecision(BaseModel):
+    decision: str = Field(description="'APPROVED' or 'REJECTED'")
+    reason: Optional[str] = None
+
+
+class ChangeRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    request_id: uuid.UUID
+    person_id: str
+    request_type: str
+    request_details: dict[str, Any]
+    reason: str
+    status: str
+    risk_score_at_submission: int
+    stress_score_at_submission: int
+    contributing_factors_at_submission: Optional[list[Any]] = None
+    system_recommendation: str
+    recommendation_reason: Optional[str] = None
+    officer_decision: Optional[str] = None
+    officer_reason: Optional[str] = None
+    decided_by_person_id: Optional[str] = None
+    submitted_at: datetime
+    decided_at: Optional[datetime] = None
+    notification_status: str
+
+
+class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    notification_id: uuid.UUID
+    recipient_id: str
+    recipient_role: Optional[str] = None
+    title: str
+    message: str
+    request_id: Optional[uuid.UUID] = None
+    is_read: bool
+    created_at: datetime
