@@ -2,17 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Shield,
   RefreshCw,
   AlertTriangle,
   Lock,
   AlertCircle,
   Search,
-  Filter,
   Users,
-  Activity,
-  ArrowRight,
-  UserCheck
+  ArrowRight
 } from 'lucide-react';
 import {
   ResponsiveContainer,

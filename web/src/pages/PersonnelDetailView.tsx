@@ -8,18 +8,12 @@ import {
   Calendar,
   Clock,
   Coffee,
-  HeartHandshake,
   AlertTriangle,
   FileCheck,
   CheckCircle2,
   RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Moon,
-  User,
-  MapPin,
-  Briefcase
+  MapPin
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,8 +22,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  Legend
+  CartesianGrid
 } from 'recharts';
 
 interface ShapFactor {
