@@ -176,6 +176,9 @@ export const AdminDashboard: React.FC = () => {
             <Lock className="w-3 h-3 text-readiness-green" />
             Active Session Security • Defense Grade
           </span>
+        <div className="flex items-center gap-2 mb-1.5 text-xs text-field-muted font-mono uppercase tracking-wider">
+          <Lock className="w-3.5 h-3.5 text-readiness-green" />
+          <span>System Administration • Defense Security Tier</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
           Dataset Management & Predictive Pipeline Administration
