@@ -196,6 +196,20 @@ export const Login: React.FC = () => {
               </div>
               <span className="text-[11px] text-command-blue font-sans">Fill</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('ADMIN-001', 'admin123')}
+              className="w-full p-2.5 bg-field-surface-subtle hover:bg-field-surface-elevated text-left rounded border border-field-border flex items-center justify-between text-xs transition-colors"
+            >
+              <div>
+                <span className="font-semibold text-field-primary block">ADMIN-001</span>
+                <span className="text-[11px] text-field-muted">System Administrator (Dataset Upload & Retraining)</span>
+              </div>
+              <span className="px-2 py-0.5 rounded bg-blue-950/50 text-command-blue border border-blue-800/40 text-[11px] font-medium">
+                Administrator
+              </span>
+            </button>
           </div>
         </div>
       </div>

@@ -17,8 +17,10 @@ from app.risk_api import router as risk_router
 from app.alerts_api import router as alerts_router
 from app.interventions_api import router as interventions_router
 from app.dashboard_api import router as dashboard_router
+from app.dataset_api import router as dataset_router
 from app.jwt_auth import get_current_user_claims, require_roles
 from app.risk import load_risk_model
+from app.master_data import master_manager
 
 
 
@@ -68,8 +70,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Could not auto-seed demo persona during startup: {e}")
 
-    # 3. Load ML model
-    app.state.risk_model = load_risk_model()
+    # 3. Initialize Single Master Dataset & Train Default Model
+    try:
+        master_manager.initialize_default()
+        logger.info("Single Master Dataset loaded & Calibrated XGBoost + TreeSHAP pipeline activated.")
+    except Exception as e:
+        logger.warning(f"Could not initialize master dataset pipeline: {e}")
+
+    # 4. Load legacy ML model if present (fallback)
+    try:
+        app.state.risk_model = load_risk_model()
+        logger.info("Calibrated XGBoost risk model loaded successfully.")
+    except Exception as e:
+        logger.warning(f"Could not load risk model artifact during startup: {e}")
+        app.state.risk_model = None
     yield
 
 
@@ -92,6 +106,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(dataset_router)
 app.include_router(hr_router)
 app.include_router(wellness_router)
 app.include_router(risk_router)
