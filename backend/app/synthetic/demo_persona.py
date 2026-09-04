@@ -311,3 +311,31 @@ def _ensure_officer_and_admin_accounts(db: Session, unit_id: Optional[uuid.UUID]
         else:
             db.add(UserRole(person_id=admin.person_id, role="admin"))
         db.flush()
+
+    # 3. Commander
+    commander_sn = "CAPF-2024-003"
+    commander = db.query(Personnel).filter(Personnel.service_number == commander_sn).first()
+    if not commander:
+        commander = Personnel(
+            person_id=uuid.uuid4(),
+            service_number=commander_sn,
+            password_hash=hash_password("password789"),
+            rank="Commandant",
+            unit_id=unit_id,
+            pseudonymous_id=uuid.uuid4(),
+            active=True,
+            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=180),
+        )
+        db.add(commander)
+        db.flush()
+        db.add(UserRole(person_id=commander.person_id, role="commander"))
+        db.flush()
+    else:
+        commander.password_hash = hash_password("password789")
+        commander.active = True
+        role_record = db.query(UserRole).filter(UserRole.person_id == commander.person_id).first()
+        if role_record:
+            role_record.role = "commander"
+        else:
+            db.add(UserRole(person_id=commander.person_id, role="commander"))
+        db.flush()

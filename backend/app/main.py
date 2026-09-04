@@ -129,6 +129,18 @@ def dummy_welfare_officer_only(
     }
 
 
+@app.get("/dummy/commander-only")
+def dummy_commander_only(
+    claims: dict = Depends(require_roles(["commander"])),
+):
+    """Accessible ONLY by users with 'commander' role."""
+    return {
+        "message": "Access granted: commander route",
+        "person_id": claims.get("person_id"),
+        "role": claims.get("role"),
+    }
+
+
 @app.get("/dummy/authenticated")
 def dummy_authenticated(claims: dict = Depends(get_current_user_claims)):
     """Accessible by ANY valid authenticated JWT regardless of role."""

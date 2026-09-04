@@ -42,6 +42,8 @@ export const Login: React.FC = () => {
         navigate('/personnel');
       } else if (data.role === 'welfare_officer') {
         navigate('/welfare');
+      } else if (data.role === 'commander') {
+        navigate('/commander');
       } else if (data.role === 'admin') {
         navigate('/admin');
       } else {
@@ -169,6 +171,20 @@ export const Login: React.FC = () => {
               </div>
               <span className="px-2 py-0.5 rounded bg-triage-amber-bg text-triage-amber border border-triage-amber-border text-[11px] font-medium">
                 Welfare Officer
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('CAPF-2024-003', 'password789')}
+              className="w-full p-2.5 bg-field-surface-subtle hover:bg-field-surface-elevated text-left rounded border border-field-border flex items-center justify-between text-xs transition-colors"
+            >
+              <div>
+                <span className="font-semibold text-field-primary block">CAPF-2024-003</span>
+                <span className="text-[11px] text-field-muted">Commander (Unit Command & Operational Readiness)</span>
+              </div>
+              <span className="px-2 py-0.5 rounded bg-command-blue/20 text-command-blue border border-command-blue/40 text-[11px] font-medium">
+                Commander
               </span>
             </button>
           </div>

@@ -80,7 +80,7 @@ class UserRole(Base):
     __tablename__ = "user_roles"
     __table_args__ = (
         CheckConstraint(
-            "role IN ('personnel', 'welfare_officer', 'admin')",
+            "role IN ('personnel', 'welfare_officer', 'commander', 'admin')",
             name="ck_user_roles_role_valid",
         ),
         {"schema": "identity"},

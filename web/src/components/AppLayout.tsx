@@ -13,6 +13,8 @@ export const AppLayout: React.FC = () => {
         return 'Field Personnel';
       case 'welfare_officer':
         return 'Welfare Officer';
+      case 'commander':
+        return 'Unit Commander';
       case 'admin':
         return 'System Administrator';
       default:
@@ -109,6 +111,22 @@ export const AppLayout: React.FC = () => {
                   <span>Triage Queue</span>
                 </NavLink>
               </>
+            )}
+
+            {role === 'commander' && (
+              <NavLink
+                to="/commander"
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                  }`
+                }
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                <span>Command Overview</span>
+              </NavLink>
             )}
 
             {role === 'admin' && (
