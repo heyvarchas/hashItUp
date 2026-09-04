@@ -140,52 +140,61 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        {/* Operational Role Switcher for Testing */}
-        <div className="mt-6 pt-5 border-t border-field-border">
-          <p className="text-xs font-semibold text-field-muted mb-2.5">
-            Operational Test Accounts
-          </p>
-          <div className="space-y-2">
+        {/* Operational Credentials Reference */}
+        <div className="mt-6 pt-4 border-t border-field-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-field-muted">
+              Demo Credentials Reference
+            </span>
+            <span className="text-[10px] text-field-muted">Click role to fill</span>
+          </div>
+          <div className="space-y-1.5 font-mono text-xs">
             <button
               type="button"
               onClick={() => handleQuickFill('CAPF-2024-001', 'password123')}
-              className="w-full p-2.5 bg-field-surface-subtle hover:bg-field-surface-elevated text-left rounded border border-field-border flex items-center justify-between text-xs transition-colors"
+              className="w-full py-1.5 px-2.5 rounded bg-field-surface-subtle hover:bg-field-surface-elevated text-left flex items-center justify-between text-field-muted hover:text-field-primary transition-colors border border-field-border/50"
             >
-              <div>
-                <span className="font-semibold text-field-primary block">CAPF-2024-001</span>
-                <span className="text-[11px] text-field-muted">Field Personnel (30s Check-in & Personal Trends)</span>
+              <div className="flex items-center gap-2">
+                <span className="text-field-primary font-sans font-medium text-xs">Personnel</span>
+                <span className="text-field-muted text-[11px]">CAPF-2024-001</span>
               </div>
-              <span className="px-2 py-0.5 rounded bg-field-border text-field-primary text-[11px] font-medium">
-                Personnel
-              </span>
+              <span className="text-[11px] text-command-blue font-sans">Fill</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleQuickFill('CAPF-2024-002', 'password456')}
-              className="w-full p-2.5 bg-field-surface-subtle hover:bg-field-surface-elevated text-left rounded border border-field-border flex items-center justify-between text-xs transition-colors"
+              className="w-full py-1.5 px-2.5 rounded bg-field-surface-subtle hover:bg-field-surface-elevated text-left flex items-center justify-between text-field-muted hover:text-field-primary transition-colors border border-field-border/50"
             >
-              <div>
-                <span className="font-semibold text-field-primary block">CAPF-2024-002</span>
-                <span className="text-[11px] text-field-muted">Welfare Officer (Unit Overview & Triage Queue)</span>
+              <div className="flex items-center gap-2">
+                <span className="text-field-primary font-sans font-medium text-xs">Welfare Officer</span>
+                <span className="text-field-muted text-[11px]">CAPF-2024-002</span>
               </div>
-              <span className="px-2 py-0.5 rounded bg-triage-amber-bg text-triage-amber border border-triage-amber-border text-[11px] font-medium">
-                Welfare Officer
-              </span>
+              <span className="text-[11px] text-command-blue font-sans">Fill</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleQuickFill('CAPF-2024-003', 'password789')}
-              className="w-full p-2.5 bg-field-surface-subtle hover:bg-field-surface-elevated text-left rounded border border-field-border flex items-center justify-between text-xs transition-colors"
+              className="w-full py-1.5 px-2.5 rounded bg-field-surface-subtle hover:bg-field-surface-elevated text-left flex items-center justify-between text-field-muted hover:text-field-primary transition-colors border border-field-border/50"
             >
-              <div>
-                <span className="font-semibold text-field-primary block">CAPF-2024-003</span>
-                <span className="text-[11px] text-field-muted">Commander (Unit Command & Operational Readiness)</span>
+              <div className="flex items-center gap-2">
+                <span className="text-field-primary font-sans font-medium text-xs">Unit Commander</span>
+                <span className="text-field-muted text-[11px]">CAPF-2024-003</span>
               </div>
-              <span className="px-2 py-0.5 rounded bg-command-blue/20 text-command-blue border border-command-blue/40 text-[11px] font-medium">
-                Commander
-              </span>
+              <span className="text-[11px] text-command-blue font-sans">Fill</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('ADMIN-001', 'admin123')}
+              className="w-full py-1.5 px-2.5 rounded bg-field-surface-subtle hover:bg-field-surface-elevated text-left flex items-center justify-between text-field-muted hover:text-field-primary transition-colors border border-field-border/50"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-field-primary font-sans font-medium text-xs">Administrator</span>
+                <span className="text-field-muted text-[11px]">ADMIN-001</span>
+              </div>
+              <span className="text-[11px] text-command-blue font-sans">Fill</span>
             </button>
           </div>
         </div>

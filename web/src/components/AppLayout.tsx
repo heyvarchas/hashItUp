@@ -33,12 +33,12 @@ export const AppLayout: React.FC = () => {
               <Shield className="w-4 h-4 text-field-primary" />
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-sm text-field-primary tracking-normal">
                   CAPF Welfare Command
                 </span>
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
-                  {getRoleLabel(role)}
+                <span className="text-xs text-field-muted font-normal">
+                  / {getRoleLabel(role)}
                 </span>
               </div>
               <span className="text-[11px] text-field-muted">

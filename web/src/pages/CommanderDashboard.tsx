@@ -6,14 +6,9 @@ export const CommanderDashboard: React.FC = () => {
     <div className="space-y-6 font-sans">
       {/* Commander Console Header */}
       <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
-            Unit Commander Console
-          </span>
-          <span className="text-xs text-field-muted flex items-center gap-1">
-            <Shield className="w-3 h-3 text-command-blue" />
-            Operational Command & Unit Readiness
-          </span>
+        <div className="flex items-center gap-2 mb-1.5 text-xs text-field-muted font-mono uppercase tracking-wider">
+          <Shield className="w-3.5 h-3.5 text-command-blue" />
+          <span>Operational Command • Unit Readiness</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
           Battalion & Unit Command Center

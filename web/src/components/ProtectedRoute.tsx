@@ -24,20 +24,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
 
   if (allowedRoles && !allowedRoles.includes(user.claims.role)) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center">
-          <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-            !
+      <div className="min-h-screen bg-field-bg flex flex-col items-center justify-center p-4 font-sans">
+        <div className="bg-field-surface border border-field-border rounded-lg p-6 max-w-md w-full text-center">
+          <div className="text-xs font-mono uppercase tracking-wider text-triage-amber mb-2">
+            Access Restricted (RBAC)
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Access Restricted</h2>
-          <p className="text-sm text-slate-400 mb-6">
-            Your current role (<span className="text-indigo-400 font-mono font-medium">{user.claims.role}</span>) does not have permission to view this section.
+          <h2 className="text-lg font-bold text-field-primary mb-2">Unauthorized Operational Tier</h2>
+          <p className="text-xs text-field-muted mb-6 leading-relaxed">
+            Your current assigned role ({user.claims.role}) is not authorized to access this operational sector.
           </p>
           <button
             onClick={() => window.history.back()}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-field-surface-subtle hover:bg-field-surface-elevated text-field-primary text-xs font-semibold rounded border border-field-border transition-colors"
           >
-            Go Back
+            Return to Previous Screen
           </button>
         </div>
       </div>
