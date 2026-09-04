@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 
 interface AppNotification {
   notification_id: string;
@@ -22,7 +23,7 @@ export const NotificationBell: React.FC = () => {
   const fetchNotifications = async () => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/notifications', {
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (res.ok) {
@@ -53,7 +54,7 @@ export const NotificationBell: React.FC = () => {
 
   const markAsRead = async (notifId: string) => {
     try {
-      await fetch(`http://localhost:8000/notifications/${notifId}/read`, {
+      await fetch(`${API_BASE_URL}/notifications/${notifId}/read`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
@@ -67,7 +68,7 @@ export const NotificationBell: React.FC = () => {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('http://localhost:8000/notifications/read-all', {
+      await fetch(`${API_BASE_URL}/notifications/read-all`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${user?.token}` },
       });

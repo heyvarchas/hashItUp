@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RequestForChangeModal } from '../components/RequestForChangeModal';
+import { API_BASE_URL } from '../config';
 import {
   ResponsiveContainer,
   LineChart,
@@ -80,7 +81,7 @@ export const PersonnelDashboard: React.FC = () => {
 
     try {
       // 1. Fetch wellness check-in history
-      const historyRes = await fetch('http://localhost:8000/wellness/history?limit=30', {
+      const historyRes = await fetch(`${API_BASE_URL}/wellness/history?limit=30`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (!historyRes.ok) {
@@ -93,7 +94,7 @@ export const PersonnelDashboard: React.FC = () => {
       setHistory(sortedHistory);
 
       // 2. Fetch supportive risk overview
-      const riskRes = await fetch('http://localhost:8000/risk/me', {
+      const riskRes = await fetch(`${API_BASE_URL}/risk/me`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (riskRes.ok) {
@@ -102,7 +103,7 @@ export const PersonnelDashboard: React.FC = () => {
       }
 
       // 3. Fetch employee's change requests
-      const reqRes = await fetch('http://localhost:8000/requests/my', {
+      const reqRes = await fetch(`${API_BASE_URL}/requests/my`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (reqRes.ok) {

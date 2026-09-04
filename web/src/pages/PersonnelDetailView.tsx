@@ -15,6 +15,7 @@ import {
   Moon,
   MapPin
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 import {
   ResponsiveContainer,
   LineChart,
@@ -124,7 +125,7 @@ export const PersonnelDetailView: React.FC = () => {
 
     try {
       // 1. Fetch detail & SHAP factors
-      const detailRes = await fetch(`http://localhost:8000/api/personnel/${personId}`, {
+      const detailRes = await fetch(`${API_BASE_URL}/api/personnel/${personId}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (!detailRes.ok) {
@@ -134,7 +135,7 @@ export const PersonnelDetailView: React.FC = () => {
       setDetail(detailData);
 
       // 2. Fetch longitudinal history for charts
-      const histRes = await fetch(`http://localhost:8000/api/personnel/${personId}/history`, {
+      const histRes = await fetch(`${API_BASE_URL}/api/personnel/${personId}/history`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (histRes.ok) {

@@ -19,6 +19,7 @@ import {
   Lock,
   FileText
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface RecommendationItem {
   id: string;
@@ -129,7 +130,7 @@ export const CaseDetail: React.FC = () => {
 
     try {
       // 1. Fetch Risk Assessment Detail
-      const riskRes = await fetch(`http://localhost:8000/personnel/${pseudonymousId}/risk`, {
+      const riskRes = await fetch(`${API_BASE_URL}/personnel/${pseudonymousId}/risk`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
@@ -144,7 +145,7 @@ export const CaseDetail: React.FC = () => {
       let targetAlert: AlertDetail | null = null;
       if (alertIdParam) {
         try {
-          const alertRes = await fetch(`http://localhost:8000/alerts/${alertIdParam}`, {
+          const alertRes = await fetch(`${API_BASE_URL}/alerts/${alertIdParam}`, {
             headers: { Authorization: `Bearer ${user.token}` },
           });
           if (alertRes.ok) {
@@ -156,7 +157,7 @@ export const CaseDetail: React.FC = () => {
       }
 
       if (!targetAlert) {
-        const allAlertsRes = await fetch(`http://localhost:8000/alerts`, {
+        const allAlertsRes = await fetch(`${API_BASE_URL}/alerts`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         if (allAlertsRes.ok) {
@@ -178,7 +179,7 @@ export const CaseDetail: React.FC = () => {
       // 3. Fetch past Interventions
       try {
         const intRes = await fetch(
-          `http://localhost:8000/interventions?pseudonymous_id=${pseudonymousId}`,
+          `${API_BASE_URL}/interventions?pseudonymous_id=${pseudonymousId}`,
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
         if (intRes.ok) {
@@ -221,7 +222,7 @@ export const CaseDetail: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/interventions', {
+      const response = await fetch(`${API_BASE_URL}/interventions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

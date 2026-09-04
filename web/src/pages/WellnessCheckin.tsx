@@ -9,6 +9,7 @@ import {
   AlertCircle,
   HelpCircle
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export const WellnessCheckin: React.FC = () => {
   const { user } = useAuth();
@@ -54,7 +55,7 @@ export const WellnessCheckin: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/wellness/assessment', {
+      const response = await fetch(`${API_BASE_URL}/wellness/assessment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

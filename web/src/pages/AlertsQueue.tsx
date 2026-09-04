@@ -10,6 +10,7 @@ import {
   Lock,
   FileSearch,
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export interface AlertItem {
   id: string;
@@ -44,7 +45,7 @@ export const AlertsQueue: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      let url = `http://localhost:8000/alerts?`;
+      let url = `${API_BASE_URL}/alerts?`;
       const params = new URLSearchParams();
       if (statusFilter && statusFilter !== 'all') {
         params.append('status', statusFilter);

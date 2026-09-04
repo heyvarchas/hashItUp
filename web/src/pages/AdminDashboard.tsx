@@ -14,6 +14,7 @@ import {
   Check,
   RotateCcw
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface DatasetStatus {
   active_dataset: string;
@@ -66,7 +67,7 @@ export const AdminDashboard: React.FC = () => {
   const fetchStatus = async () => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/api/dataset/status', {
+      const res = await fetch(`${API_BASE_URL}/api/dataset/status`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (res.ok) {
@@ -103,7 +104,7 @@ export const AdminDashboard: React.FC = () => {
     formData.append('file', selectedFile);
 
     try {
-      const res = await fetch('http://localhost:8000/api/dataset/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/dataset/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${user.token}` },
         body: formData,
@@ -136,7 +137,7 @@ export const AdminDashboard: React.FC = () => {
       setTimeout(() => setTrainStep(4), 1800); // 4: Predictions generated
       setTimeout(() => setTrainStep(5), 2400); // 5: SHAP explanations generated
 
-      const res = await fetch('http://localhost:8000/api/dataset/train', {
+      const res = await fetch(`${API_BASE_URL}/api/dataset/train`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

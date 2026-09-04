@@ -11,6 +11,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 
 interface RequestModalProps {
   isOpen: boolean;
@@ -84,7 +85,7 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
     }
 
     try {
-      const res = await fetch('http://localhost:8000/requests', {
+      const res = await fetch(`${API_BASE_URL}/requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -14,6 +14,7 @@ import {
   XCircle,
   Sparkles
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 import {
   ResponsiveContainer,
   BarChart,
@@ -137,7 +138,7 @@ export const WelfareDashboard: React.FC = () => {
 
     try {
       // 1. Fetch aggregate statistics
-      const resSummary = await fetch('http://localhost:8000/dashboard/unit-summary', {
+      const resSummary = await fetch(`${API_BASE_URL}/dashboard/unit-summary`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (resSummary.ok) {
@@ -150,7 +151,7 @@ export const WelfareDashboard: React.FC = () => {
       }
 
       // 2. Fetch all personnel latest records from Master Dataset
-      const resPersonnel = await fetch('http://localhost:8000/api/personnel', {
+      const resPersonnel = await fetch(`${API_BASE_URL}/api/personnel`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (resPersonnel.ok) {
@@ -159,7 +160,7 @@ export const WelfareDashboard: React.FC = () => {
       }
 
       // 3. Fetch pending change requests for welfare officer
-      const resReqs = await fetch('http://localhost:8000/requests/pending', {
+      const resReqs = await fetch(`${API_BASE_URL}/requests/pending`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (resReqs.ok) {
@@ -179,7 +180,7 @@ export const WelfareDashboard: React.FC = () => {
     setActionSuccessMsg(null);
     try {
       const reason = rejectionReasons[requestId] || undefined;
-      const res = await fetch(`http://localhost:8000/requests/${requestId}/decision`, {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/decision`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

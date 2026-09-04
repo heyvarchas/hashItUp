@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import type { AuthClaims, UserSession } from '../types/auth';
+import { API_BASE_URL } from '../config';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // Validate with backend /dummy/authenticated endpoint
           try {
-            const res = await fetch('http://localhost:8000/dummy/authenticated', {
+            const res = await fetch(`${API_BASE_URL}/dummy/authenticated`, {
               headers: { Authorization: `Bearer ${existingToken}` },
             });
             if (!res.ok) {
