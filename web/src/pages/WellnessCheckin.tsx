@@ -2,16 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Smile, 
-  Moon, 
-  Flame, 
-  HelpCircle, 
-  MessageSquare, 
-  Send, 
-  CheckCircle2, 
-  AlertCircle, 
   ArrowLeft,
-  Lock
+  Lock,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react';
 
 export const WellnessCheckin: React.FC = () => {
@@ -28,27 +24,27 @@ export const WellnessCheckin: React.FC = () => {
   const [successResult, setSuccessResult] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const moodLabels: { [key: number]: { label: string; color: string } } = {
-    1: { label: 'Very Low / Distressed', color: 'text-rose-400' },
-    2: { label: 'Low / Fatigued', color: 'text-amber-400' },
-    3: { label: 'Moderate / Balanced', color: 'text-blue-400' },
-    4: { label: 'Good / Positive', color: 'text-emerald-400' },
-    5: { label: 'Excellent / Energized', color: 'text-teal-300' },
-  };
+  const moodOptions = [
+    { val: 1, label: 'Distressed / Severe Low', sub: 'Unable to focus / feeling exhausted' },
+    { val: 2, label: 'Fatigued / Low', sub: 'Noticeable drop in morale or energy' },
+    { val: 3, label: 'Moderate / Balanced', sub: 'Standard operational baseline' },
+    { val: 4, label: 'Good / Steady', sub: 'High energy and positive focus' },
+    { val: 5, label: 'Optimal / Energized', sub: 'Peak physical and mental readiness' },
+  ];
 
-  const sleepLabels: { [key: number]: { label: string; color: string } } = {
-    1: { label: 'Very Poor (Broken / Insomnia)', color: 'text-rose-400' },
-    2: { label: 'Poor (Interrupted)', color: 'text-amber-400' },
-    3: { label: 'Fair (Adequate rest)', color: 'text-blue-400' },
-    4: { label: 'Good (Sound sleep)', color: 'text-emerald-400' },
-    5: { label: 'Restorative / Optimal', color: 'text-teal-300' },
-  };
+  const sleepOptions = [
+    { val: 1, label: 'Very Poor', sub: '< 3 hours or severe interruption' },
+    { val: 2, label: 'Restless', sub: 'Broken sleep / unrefreshed' },
+    { val: 3, label: 'Adequate', sub: '5–6 hours of standard rest' },
+    { val: 4, label: 'Good Rest', sub: '7–8 hours sound uninterrupted sleep' },
+    { val: 5, label: 'Optimal Recovery', sub: 'Fully restorative natural sleep' },
+  ];
 
-  const getStressDetails = (val: number) => {
-    if (val <= 3) return { label: 'Low / Manageable', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' };
-    if (val <= 6) return { label: 'Moderate / Demanding', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' };
-    if (val <= 8) return { label: 'High / Strained', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' };
-    return { label: 'Severe / Overwhelming', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' };
+  const getStressBand = (val: number) => {
+    if (val <= 3) return { label: 'Low / Manageable Tempo', color: 'text-readiness-green', bg: 'bg-triage-green-bg border-triage-green-border' };
+    if (val <= 6) return { label: 'Moderate Operational Demand', color: 'text-blue-400', bg: 'bg-triage-blue-bg border-triage-blue-border' };
+    if (val <= 8) return { label: 'Elevated Strain / High Fatigue', color: 'text-triage-amber', bg: 'bg-triage-amber-bg border-triage-amber-border' };
+    return { label: 'Severe / Overwhelming Workload', color: 'text-triage-red', bg: 'bg-triage-red-bg border-triage-red-border' };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,116 +71,117 @@ export const WellnessCheckin: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to submit check-in assessment.');
+        throw new Error(errorData.detail || 'Failed to submit daily check-in.');
       }
 
       const data = await response.json();
       setSuccessResult(data);
     } catch (err: any) {
-      setErrorMessage(err.message || 'An error occurred during submission.');
+      setErrorMessage(err.message || 'An error occurred during check-in submission.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Back button & header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-2xl mx-auto space-y-5 font-sans">
+      {/* Top Header Rail */}
+      <div className="flex items-center justify-between pb-1">
         <button
           onClick={() => navigate('/personnel')}
-          className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition-colors bg-slate-900/60 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-800"
+          className="flex items-center gap-1.5 text-xs font-medium text-field-muted hover:text-field-primary transition-colors bg-field-surface px-3 py-1.5 rounded border border-field-border"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Readiness Dashboard</span>
         </button>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900/40 px-3 py-1 rounded-full border border-slate-800">
-          <Lock className="w-3 h-3 text-emerald-400" />
-          <span>Pseudonymous submission</span>
+        <div className="flex items-center gap-1.5 text-xs text-field-muted bg-field-surface px-2.5 py-1 rounded border border-field-border">
+          <Lock className="w-3 h-3 text-readiness-green" />
+          <span>Pseudonymous: {user?.claims.pseudonymous_id?.slice(0, 8)}...</span>
         </div>
       </div>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Daily Wellness Check-in</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Complete your confidential self-assessment to track recovery, stress levels, and operational readiness.
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-7">
+        <div className="border-b border-field-border pb-4 mb-5">
+          <h1 className="text-xl font-bold text-field-primary tracking-tight">
+            Daily 30-Second Wellness Check-in
+          </h1>
+          <p className="text-xs text-field-muted mt-1 leading-relaxed">
+            Quick confidential check-in on mood, sleep, and operational strain. Data is encrypted and locked away separately from service rosters.
           </p>
         </div>
 
         {errorMessage && (
-          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-400 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="mb-5 p-3.5 bg-triage-red-bg border border-triage-red-border rounded flex items-start gap-2.5 text-triage-red text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-rose-300">Submission Error</p>
-              <p className="text-xs text-rose-400 mt-0.5">{errorMessage}</p>
+              <p className="font-semibold">Submission Error</p>
+              <p className="text-xs mt-0.5">{errorMessage}</p>
             </div>
           </div>
         )}
 
         {successResult ? (
-          <div className="py-6 space-y-6 text-center">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto shadow-inner">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="py-4 space-y-5 text-center">
+            <div className="w-12 h-12 bg-triage-green-bg border border-triage-green-border rounded-full flex items-center justify-center text-readiness-green mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Check-in Submitted Successfully!</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Your response has been securely saved and evaluated by the automated risk engine.
+              <h2 className="text-lg font-bold text-field-primary">Check-in Logged Successfully</h2>
+              <p className="text-xs text-field-muted mt-1">
+                Your report has been evaluated by the early-warning fatigue engine.
               </p>
             </div>
 
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left font-mono text-xs space-y-1.5 text-slate-300">
-              <p className="text-slate-500 font-sans text-[11px] font-semibold uppercase tracking-wider mb-2">DB Confirmation Row</p>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Assessment ID:</span>
-                <span className="text-indigo-300 truncate max-w-[240px]">{successResult.id}</span>
+            {/* Confirmation Dossier Sheet */}
+            <div className="bg-field-surface-subtle p-4 rounded border border-field-border text-left text-xs space-y-2 text-field-primary">
+              <div className="flex justify-between border-b border-field-border pb-1 text-field-muted">
+                <span>Assessment Ref:</span>
+                <span className="font-medium text-field-primary">{successResult.id?.slice(0, 12)}...</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Pseudonymous ID:</span>
-                <span className="text-indigo-300 truncate max-w-[240px]">{successResult.pseudonymous_id}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Submitted At:</span>
+                <span className="text-field-muted">Logged At:</span>
                 <span>{new Date(successResult.submitted_at).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Mood / Sleep / Stress:</span>
-                <span className="text-emerald-400 font-bold">{successResult.mood_score}/5 • {successResult.sleep_quality_score}/5 • {successResult.stress_self_rating}/10</span>
+                <span className="text-field-muted">Mood / Sleep / Stress:</span>
+                <span className="font-semibold text-field-primary">
+                  {successResult.mood_score}/5 • {successResult.sleep_quality_score}/5 • {successResult.stress_self_rating}/10
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Talk to Someone:</span>
-                <span className={successResult.help_requested ? 'text-amber-400 font-bold' : 'text-slate-400'}>
-                  {successResult.help_requested ? 'Requested' : 'No'}
+                <span className="text-field-muted">Officer Outreach Request:</span>
+                <span className={successResult.help_requested ? 'text-triage-amber font-semibold' : 'text-field-muted'}>
+                  {successResult.help_requested ? 'Dispatched Confidentially' : 'None Requested'}
                 </span>
               </div>
             </div>
 
-            <div className="flex gap-3 justify-center pt-2">
+            <div className="flex gap-2.5 justify-center pt-2">
               <button
                 onClick={() => {
                   setSuccessResult(null);
                   setFreeTextNote('');
                   setHelpRequested(false);
                 }}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
+                className="px-3.5 py-2 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors"
               >
-                Submit Another Entry
+                Log Another Entry
               </button>
               <button
                 onClick={() => navigate('/personnel')}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-indigo-600/25"
+                className="px-4 py-2 bg-command-blue hover:bg-blue-600 text-white rounded text-xs font-semibold transition-colors"
               >
-                Go to Dashboard
+                Return to Dashboard
               </button>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Demo Scenario Quick-Fill Bar */}
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-3 flex items-center justify-between gap-3">
-              <div className="text-left">
-                <span className="text-[11px] font-bold text-indigo-300 block uppercase tracking-wider">Demo / Rehearsal Helper</span>
-                <span className="text-xs text-slate-400">Pre-fill pre-planned assessment to tip persona over into high alert</span>
+            {/* Quick Demo Scenario Trigger */}
+            <div className="bg-field-surface-subtle border border-field-border rounded p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="font-semibold text-field-primary block">Demonstration Scenario Helper</span>
+                <span className="text-field-muted text-[11px]">Pre-populate acute fatigue indicators (mood: 1, sleep: 1, stress: 9)</span>
               </div>
               <button
                 type="button"
@@ -193,136 +190,153 @@ export const WellnessCheckin: React.FC = () => {
                   setSleep(1);
                   setStress(9);
                   setHelpRequested(false);
-                  setFreeTextNote('Severe exhaustion, chronic sleep disturbance and feeling unable to cope.');
+                  setFreeTextNote('Severe fatigue following multiple night shifts, persistent sleep disruption.');
                 }}
-                className="px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shrink-0 transition"
+                className="px-2.5 py-1 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium shrink-0 transition-colors"
               >
-                Pre-fill Demo Scenario
+                Pre-fill Fatigue Case
               </button>
             </div>
 
-            {/* Mood Slider */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4.5 sm:p-5 space-y-3">
+            {/* 1. Mood Rating Selector */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Smile className="w-4 h-4 text-indigo-400" />
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Mood Rating (1 - 5)
-                  </label>
-                </div>
-                <span className={`text-xs font-semibold ${moodLabels[mood].color}`}>
-                  {mood} / 5 — {moodLabels[mood].label}
+                <label className="text-xs font-semibold text-field-primary">
+                  1. Current Mood & Energy State
+                </label>
+                <span className="text-xs font-medium text-field-muted">
+                  Score: <strong className="text-field-primary">{mood}</strong>/5
                 </span>
               </div>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={mood}
-                onChange={(e) => setMood(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-              />
-              <div className="flex justify-between text-[11px] text-slate-500 font-medium px-1">
-                <span>1 (Distressed)</span>
-                <span>3 (Moderate)</span>
-                <span>5 (Energized)</span>
-              </div>
-            </div>
-
-            {/* Sleep Slider */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4.5 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Moon className="w-4 h-4 text-blue-400" />
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Sleep Quality (1 - 5)
-                  </label>
-                </div>
-                <span className={`text-xs font-semibold ${sleepLabels[sleep].color}`}>
-                  {sleep} / 5 — {sleepLabels[sleep].label}
-                </span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={sleep}
-                onChange={(e) => setSleep(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-              />
-              <div className="flex justify-between text-[11px] text-slate-500 font-medium px-1">
-                <span>1 (Very Poor)</span>
-                <span>3 (Fair)</span>
-                <span>5 (Optimal)</span>
-              </div>
-            </div>
-
-            {/* Stress Self-Rating Slider */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4.5 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" />
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Stress Self-Rating (1 - 10)
-                  </label>
-                </div>
-                {(() => {
-                  const details = getStressDetails(stress);
+              <div className="grid grid-cols-5 gap-1.5">
+                {moodOptions.map((opt) => {
+                  const isSelected = mood === opt.val;
                   return (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${details.color} ${details.bg}`}>
-                      Level {stress} — {details.label}
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => setMood(opt.val)}
+                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
+                        isSelected
+                          ? 'bg-command-blue text-white border-blue-400 font-semibold'
+                          : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                      }`}
+                    >
+                      <span className="text-sm font-bold">{opt.val}</span>
+                      <span className="text-[10px] leading-tight line-clamp-1">{opt.label.split('/')[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-field-muted">
+                {moodOptions.find((m) => m.val === mood)?.sub}
+              </p>
+            </div>
+
+            {/* 2. Sleep Quality Selector */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-field-primary">
+                  2. Sleep Quality & Recovery (Last 24 Hours)
+                </label>
+                <span className="text-xs font-medium text-field-muted">
+                  Score: <strong className="text-field-primary">{sleep}</strong>/5
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1.5">
+                {sleepOptions.map((opt) => {
+                  const isSelected = sleep === opt.val;
+                  return (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => setSleep(opt.val)}
+                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
+                        isSelected
+                          ? 'bg-command-blue text-white border-blue-400 font-semibold'
+                          : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                      }`}
+                    >
+                      <span className="text-sm font-bold">{opt.val}</span>
+                      <span className="text-[10px] leading-tight line-clamp-1">{opt.label.split('/')[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-field-muted">
+                {sleepOptions.find((s) => s.val === sleep)?.sub}
+              </p>
+            </div>
+
+            {/* 3. Stress Self-Rating (1-10) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-field-primary">
+                  3. Stress & Fatigue Level (1–10 Scale)
+                </label>
+                {(() => {
+                  const band = getStressBand(stress);
+                  return (
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${band.bg} ${band.color}`}>
+                      Level {stress} — {band.label}
                     </span>
                   );
                 })()}
               </div>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                value={stress}
-                onChange={(e) => setStress(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
-              />
-              <div className="flex justify-between text-[11px] text-slate-500 font-medium px-1">
-                <span>1 (Low)</span>
-                <span>5 (Manageable)</span>
-                <span>10 (Severe)</span>
+              <div className="grid grid-cols-10 gap-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                  const isSelected = stress === num;
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setStress(num)}
+                      className={`py-2 rounded border text-center text-xs font-bold transition-colors ${
+                        isSelected
+                          ? num >= 8
+                            ? 'bg-triage-red text-white border-red-500'
+                            : num >= 6
+                            ? 'bg-triage-amber text-white border-amber-500'
+                            : 'bg-command-blue text-white border-blue-400'
+                          : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[11px] text-field-muted">
+                <span>1 (Low demand)</span>
+                <span>5 (Manageable tempo)</span>
+                <span>10 (Overwhelming strain)</span>
               </div>
             </div>
 
-            {/* Free Text Note */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-slate-400" />
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Optional Notes / Comments
-                </label>
-              </div>
+            {/* 4. Notes / Operational Context */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-field-primary">
+                4. Operational Notes (Optional)
+              </label>
               <textarea
                 rows={3}
                 value={freeTextNote}
                 onChange={(e) => setFreeTextNote(e.target.value)}
-                placeholder="Share any operational context, sleep disruptions, or physical fatigue symptoms..."
-                className="w-full bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                placeholder="Share any operational context, consecutive night shifts, missed rest intervals, or physical symptoms..."
+                className="w-full bg-field-surface-subtle border border-field-border rounded p-3 text-xs text-field-primary placeholder-field-muted/60 focus:outline-none focus:border-command-blue"
               />
-              <p className="text-[11px] text-slate-500">
-                Notes are stored encrypted in the analytics database and isolated from service rosters.
-              </p>
             </div>
 
-            {/* "I'd like to talk to someone" Flag */}
-            <div className="bg-gradient-to-r from-amber-950/20 via-slate-900 to-slate-900 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
+            {/* 5. Confidential Support Outreach Toggle */}
+            <div className="bg-field-surface-subtle border border-field-border rounded p-4 flex items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0 mt-0.5">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
+                <HelpCircle className="w-4 h-4 text-triage-amber shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-white">Confidential Support Request</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Trigger an immediate, confidential outreach notification for the welfare officer team.
+                  <p className="text-xs font-semibold text-field-primary">
+                    Request Confidential Officer Outreach
+                  </p>
+                  <p className="text-[11px] text-field-muted mt-0.5">
+                    Triggers a high-priority, private review notification for the unit welfare officer team.
                   </p>
                 </div>
               </div>
@@ -330,13 +344,13 @@ export const WellnessCheckin: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setHelpRequested(!helpRequested)}
-                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition border ${
+                className={`shrink-0 px-3.5 py-1.5 rounded text-xs font-semibold transition-colors border ${
                   helpRequested
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                    ? 'bg-triage-amber text-white border-amber-500'
+                    : 'bg-field-surface-elevated hover:bg-field-border text-field-primary border-field-border'
                 }`}
               >
-                {helpRequested ? "✓ Help Requested" : "I'd like to talk to someone"}
+                {helpRequested ? '✓ Outreach Requested' : "I'd like to talk to someone"}
               </button>
             </div>
 
@@ -344,14 +358,14 @@ export const WellnessCheckin: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white font-medium text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-command-blue hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs rounded transition-colors flex items-center justify-center gap-2"
             >
               {submitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  <span>Submit Assessment</span>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Submit Confidential Assessment</span>
                 </>
               )}
             </button>
