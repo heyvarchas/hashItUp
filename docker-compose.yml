@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-welfare_admin}:${POSTGRES_PASSWORD:-changeme_dev_only}@db:5432/${POSTGRES_DB:-welfare_db}
     volumes:
       - ./backend/app:/app/app   # live-reload local code changes into the container
+      - ./backend/data:/app/data
     depends_on:
       db:
         condition: service_healthy

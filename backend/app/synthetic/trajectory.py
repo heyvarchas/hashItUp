@@ -23,7 +23,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -350,11 +349,12 @@ def plot_population_trajectories(
     output_path: Optional[str] = None,
     title: str = "Synthetic Latent Stress Trajectories (N=50 Individuals)",
     highlight_count: int = 5,
-) -> plt.Figure:
+) -> Any:
     """
     Creates a publication-quality visualization of the 50 latent stress trajectories,
     highlighting diverse archetypes (high resilience, deployment hardship, transfer shocks).
     """
+    import matplotlib.pyplot as plt
     fig, (ax_main, ax_dist) = plt.subplots(
         nrows=2,
         ncols=1,

@@ -22,7 +22,6 @@ import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 import xgboost as xgb
-import shap
 
 logger = logging.getLogger("uvicorn")
 
@@ -240,7 +239,7 @@ class MasterDataManager:
         self.active_df: pd.DataFrame = pd.DataFrame()
         self.active_model: Optional[CalibratedClassifierCV] = None
         self.raw_xgb_model: Optional[xgb.XGBClassifier] = None
-        self.active_explainer: Optional[shap.TreeExplainer] = None
+        self.active_explainer: Optional[Any] = None
         self.feature_columns: List[str] = []
         self.model_version: str = "synthetic-model-v1"
         self.training_timestamp: str = ""
@@ -467,16 +466,14 @@ class MasterDataManager:
             )
             calibrated_model.fit(X_train, y_train)
 
-        # 5. Initialize TreeSHAP Explainer
-        explainer = shap.TreeExplainer(xgb_clf)
+        # 5. Calculate native TreeSHAP values for entire dataset in C++ via booster
+        booster = xgb_clf.get_booster()
+        shap_values = booster.predict(xgb.DMatrix(X), pred_contribs=True)[:, :-1]
 
-        # 6. Generate Predictions & SHAP values across all rows in df
+        # 6. Generate Predictions across all rows in df
         all_probs = calibrated_model.predict_proba(X)[:, 1]
         all_scores = np.round(all_probs * 100).astype(int)
         all_categories = [get_risk_category(s) for s in all_scores]
-
-        # Calculate SHAP values for entire dataset for instant dashboard retrieval
-        shap_values = explainer.shap_values(X)
 
         # Store predictions and explanations in active DataFrame copy
         active_df = df.copy()
@@ -487,7 +484,7 @@ class MasterDataManager:
         self.active_df = active_df
         self.active_model = calibrated_model
         self.raw_xgb_model = xgb_clf
-        self.active_explainer = explainer
+        self.active_explainer = booster
         self.feature_columns = feature_cols
         self.active_dataset_name = dataset_name
         self.model_version = version
