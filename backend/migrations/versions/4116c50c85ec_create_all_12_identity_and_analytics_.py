@@ -161,7 +161,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('person_id', sa.UUID(), nullable=False),
     sa.Column('role', sa.String(), nullable=False),
-    sa.CheckConstraint("role IN ('personnel', 'welfare_officer', 'admin')", name='ck_user_roles_role_valid'),
+    sa.CheckConstraint("role IN ('personnel', 'welfare_officer', 'commander', 'admin')", name='ck_user_roles_role_valid'),
     sa.ForeignKeyConstraint(['person_id'], ['identity.personnel.person_id'], ),
     sa.PrimaryKeyConstraint('id'),
     schema='identity'

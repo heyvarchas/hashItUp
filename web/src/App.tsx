@@ -9,6 +9,7 @@ import { WellnessCheckin } from './pages/WellnessCheckin';
 import { WelfareDashboard } from './pages/WelfareDashboard';
 import { AlertsQueue } from './pages/AlertsQueue';
 import { CaseDetail } from './pages/CaseDetail';
+import { CommanderDashboard } from './pages/CommanderDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 const RootRedirect: React.FC = () => {
@@ -30,6 +31,8 @@ const RootRedirect: React.FC = () => {
     return <Navigate to="/personnel" replace />;
   } else if (user.claims.role === 'welfare_officer') {
     return <Navigate to="/welfare" replace />;
+  } else if (user.claims.role === 'commander') {
+    return <Navigate to="/commander" replace />;
   } else if (user.claims.role === 'admin') {
     return <Navigate to="/admin" replace />;
   }
@@ -60,6 +63,11 @@ export function App() {
                 <Route path="/welfare" element={<WelfareDashboard />} />
                 <Route path="/welfare/alerts" element={<AlertsQueue />} />
                 <Route path="/welfare/cases/:pseudonymousId" element={<CaseDetail />} />
+              </Route>
+
+              {/* Commander Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['commander']} />}>
+                <Route path="/commander" element={<CommanderDashboard />} />
               </Route>
 
               {/* Admin Routes */}

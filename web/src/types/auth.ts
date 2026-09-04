@@ -2,7 +2,7 @@ export interface AuthClaims {
   sub: string;
   person_id: string;
   pseudonymous_id: string;
-  role: 'personnel' | 'welfare_officer' | 'admin';
+  role: 'personnel' | 'welfare_officer' | 'commander' | 'admin';
   exp: number;
 }
 

@@ -1,67 +1,67 @@
 import React from 'react';
-import { Database, Server, Key, CheckCircle2, Lock } from 'lucide-react';
+import { Shield, Users, Activity, CheckCircle2 } from 'lucide-react';
 
-export const AdminDashboard: React.FC = () => {
+export const CommanderDashboard: React.FC = () => {
   return (
     <div className="space-y-6 font-sans">
-      {/* System Administration Header */}
+      {/* Commander Console Header */}
       <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
         <div className="flex items-center gap-2 mb-1.5 text-xs text-field-muted font-mono uppercase tracking-wider">
-          <Lock className="w-3.5 h-3.5 text-readiness-green" />
-          <span>System Administration • Defense Security Tier</span>
+          <Shield className="w-3.5 h-3.5 text-command-blue" />
+          <span>Operational Command • Unit Readiness</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
-          System Administration & Cryptographic Audit
+          Battalion & Unit Command Center
         </h1>
         <p className="text-xs sm:text-sm text-field-muted mt-1 max-w-2xl leading-relaxed">
-          Manage system configurations, dual-schema pseudonymity isolation policies, telemetry endpoints, and cryptographic key rotation cycles.
+          Executive oversight for battalion combat readiness, aggregate workforce health indicators, and operational deployment planning.
         </p>
       </div>
 
-      {/* Status Grid */}
+      {/* Operational Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
           <div className="flex items-center justify-between pb-2 border-b border-field-border">
             <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-command-blue" />
-              <h3 className="text-xs font-bold text-field-primary">FastAPI Backend</h3>
+              <Users className="w-4 h-4 text-command-blue" />
+              <h3 className="text-xs font-bold text-field-primary">Unit Readiness Tier</h3>
             </div>
             <span className="flex items-center gap-1 text-[11px] font-semibold text-readiness-green">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Nominal
+              <CheckCircle2 className="w-3.5 h-3.5" /> High Readiness
             </span>
           </div>
           <p className="text-xs text-field-muted">
-            Service active on port 8000. Real-time predictive risk scoring pipelines online.
+            Battalion personnel operational readiness indices remain within calibrated parameters.
           </p>
         </div>
 
         <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
           <div className="flex items-center justify-between pb-2 border-b border-field-border">
             <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-readiness-green" />
-              <h3 className="text-xs font-bold text-field-primary">Dual-Schema Isolation</h3>
+              <Activity className="w-4 h-4 text-readiness-green" />
+              <h3 className="text-xs font-bold text-field-primary">Workforce Health Index</h3>
             </div>
             <span className="flex items-center gap-1 text-[11px] font-semibold text-readiness-green">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Enforced
+              <CheckCircle2 className="w-3.5 h-3.5" /> Optimal
             </span>
           </div>
           <p className="text-xs text-field-muted">
-            Identity schema strictly decoupled from analytics and assessment tables.
+            Aggregated health & wellness trends report positive morale and duty tempo stability.
           </p>
         </div>
 
         <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
           <div className="flex items-center justify-between pb-2 border-b border-field-border">
             <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 text-triage-amber" />
-              <h3 className="text-xs font-bold text-field-primary">Key Rotation</h3>
+              <Shield className="w-4 h-4 text-command-blue" />
+              <h3 className="text-xs font-bold text-field-primary">Role Permissions (RBAC)</h3>
             </div>
-            <span className="text-[11px] text-field-muted font-mono">
-              Auto: 90 Days
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-field-primary">
+              Commander
             </span>
           </div>
           <p className="text-xs text-field-muted">
-            Cryptographic salting and token generation functioning under defense compliance standards.
+            Isolated executive access tier segregated from medical and clinical case triage records.
           </p>
         </div>
       </div>

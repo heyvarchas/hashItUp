@@ -11,6 +11,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Personnel (Demo Persona)** | `CAPF-2024-001` | `password123` | `http://localhost:5173/login` $\to$ `/personnel` | Scripted persona whose baseline sits just below high risk |
 | **Welfare Officer** | `CAPF-2024-002` | `password456` | `http://localhost:5173/login` $\to$ `/welfare` | Triage alerts queue, case review, log interventions |
+| **Unit Commander** | `CAPF-2024-003` | `password789` | `http://localhost:5173/login` $\to$ `/commander` | Executive command oversight, combat readiness & unit health |
 | **System Administrator** | `ADMIN-001` | `admin123` | `http://localhost:5173/login` $\to$ `/admin` | Synthetic data generation & database integrity |
 
 ---
@@ -100,6 +101,16 @@ On the Login screen (`http://localhost:5173/login`), click the quick-fill button
 
 ---
 
+### Act V: Unit Commander Role Segregation
+1. **Log Out & Sign In as Commander:**
+   - Return to `http://localhost:5173/login`.
+   - Click **`CAPF-2024-003` (Commander Role)** quick button (or enter `CAPF-2024-003` / `password789`).
+   - Click **Sign In**. You will land on the **Battalion & Unit Command Center** (`/commander`).
+2. **Demonstrate Operational RBAC Segregation:**
+   - Highlight that the Commander has executive combat readiness oversight while being strictly restricted from accessing individual clinical cases or medical drilldowns.
+
+---
+
 ## 4. Fallback & Emergency Contingency Procedures
 
 ### Contingency 1: Full Database Re-seed via Admin API
@@ -124,4 +135,5 @@ curl http://localhost:8000/hr/demo-persona
 
 1. **Strict Cryptographic Pseudonymization:** Identity data (`identity` schema) and behavioral stress metrics (`analytics` schema) remain strictly separated.
 2. **Hybrid ML + Clinical Rule Safety Overrides:** The calibrated XGBoost model predicts continuous 0–100 risk, while deterministic safety rules enforce escalation on critical triggers (sudden drops, explicit help requests).
-3. **Audit-Log Traceability:** Every triage transition and clinical intervention binds the officer's ID and timestamp for defense compliance.
+3. **Role-Based Access Control (RBAC):** Distinct permission boundaries across Field Personnel, Welfare Officers, Unit Commanders, and System Administrators prevent unauthorized data access.
+4. **Audit-Log Traceability:** Every triage transition and clinical intervention binds the officer's ID and timestamp for defense compliance.
