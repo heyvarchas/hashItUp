@@ -9,6 +9,7 @@ import { WellnessCheckin } from './pages/WellnessCheckin';
 import { WelfareDashboard } from './pages/WelfareDashboard';
 import { AlertsQueue } from './pages/AlertsQueue';
 import { CaseDetail } from './pages/CaseDetail';
+import { PersonnelDetailView } from './pages/PersonnelDetailView';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 const RootRedirect: React.FC = () => {
@@ -56,10 +57,11 @@ export function App() {
               </Route>
 
               {/* Welfare Officer Routes */}
-              <Route element={<ProtectedRoute allowedRoles={['welfare_officer']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['welfare_officer', 'admin']} />}>
                 <Route path="/welfare" element={<WelfareDashboard />} />
                 <Route path="/welfare/alerts" element={<AlertsQueue />} />
                 <Route path="/welfare/cases/:pseudonymousId" element={<CaseDetail />} />
+                <Route path="/welfare/personnel/:personId" element={<PersonnelDetailView />} />
               </Route>
 
               {/* Admin Routes */}

@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Shield,
   RefreshCw,
   AlertTriangle,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Search,
+  Filter,
+  Users,
+  Activity,
+  ArrowRight,
+  UserCheck
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,6 +45,20 @@ interface UnitSummaryData {
   acknowledged_alerts_count: number;
 }
 
+interface PersonnelRow {
+  person_id: string;
+  record_date: string;
+  unit_id: string;
+  role: string;
+  stress_score: number;
+  welfare_risk_score: number;
+  risk_probability: number;
+  risk_category: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  sleep_hours: number;
+  duty_hours: number;
+  help_requested: boolean;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   critical: '#D6453D',
   high: '#C97A1E',
@@ -69,34 +89,46 @@ const CustomBarTooltip = ({ active, payload }: any) => {
 
 export const WelfareDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [summaryData, setSummaryData] = useState<UnitSummaryData | null>(null);
+  const [personnelList, setPersonnelList] = useState<PersonnelRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchUnitSummary = async () => {
+  // Search & Filtering States
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [unitFilter, setUnitFilter] = useState<string>('ALL');
+
+  const fetchData = async () => {
     if (!user) return;
     setIsRefreshing(true);
     setErrorMessage(null);
 
     try {
-      const res = await fetch('http://localhost:8000/dashboard/unit-summary', {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
+      // 1. Fetch aggregate statistics
+      const resSummary = await fetch('http://localhost:8000/dashboard/unit-summary', {
+        headers: { Authorization: `Bearer ${user.token}` },
       });
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch unit summary (${res.status} ${res.statusText})`);
+      if (resSummary.ok) {
+        const data: UnitSummaryData = await resSummary.json();
+        const formattedDist = data.distribution.map((d) => ({
+          ...d,
+          color: CATEGORY_COLORS[d.category] || d.color,
+        }));
+        setSummaryData({ ...data, distribution: formattedDist });
       }
 
-      const data: UnitSummaryData = await res.json();
-      // Ensure colors match our named palette
-      const formattedDist = data.distribution.map((d) => ({
-        ...d,
-        color: CATEGORY_COLORS[d.category] || d.color,
-      }));
-      setSummaryData({ ...data, distribution: formattedDist });
+      // 2. Fetch all personnel latest records from Master Dataset
+      const resPersonnel = await fetch('http://localhost:8000/api/personnel', {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (resPersonnel.ok) {
+        const pList: PersonnelRow[] = await resPersonnel.json();
+        setPersonnelList(pList);
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred while loading unit summary statistics.');
     } finally {
@@ -106,8 +138,57 @@ export const WelfareDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUnitSummary();
+    fetchData();
   }, [user]);
+
+  // Derive unique units for filter dropdown
+  const uniqueUnits = Array.from(new Set(personnelList.map((p) => p.unit_id))).sort();
+
+  // Filtered personnel roster
+  const filteredPersonnel = personnelList.filter((p) => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      p.person_id.toLowerCase().includes(q) ||
+      p.role.toLowerCase().includes(q) ||
+      p.unit_id.toLowerCase().includes(q);
+
+    const matchesCategory =
+      categoryFilter === 'ALL' || p.risk_category.toUpperCase() === categoryFilter.toUpperCase();
+
+    const matchesUnit = unitFilter === 'ALL' || p.unit_id === unitFilter;
+
+    return matchesSearch && matchesCategory && matchesUnit;
+  });
+
+  const getRiskBadge = (cat: string) => {
+    switch (cat.toUpperCase()) {
+      case 'CRITICAL':
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-red-bg text-triage-red border border-triage-red-border">
+            CRITICAL
+          </span>
+        );
+      case 'HIGH':
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-amber-bg text-triage-amber border border-triage-amber-border">
+            HIGH
+          </span>
+        );
+      case 'MODERATE':
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-blue-bg text-blue-300 border border-triage-blue-border">
+            MODERATE
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-green-bg text-readiness-green border border-triage-green-border">
+            LOW
+          </span>
+        );
+    }
+  };
 
   const elevatedPercent = summaryData
     ? (
@@ -129,14 +210,14 @@ export const WelfareDashboard: React.FC = () => {
               </span>
               <span className="text-xs text-field-muted flex items-center gap-1">
                 <Lock className="w-3 h-3 text-readiness-green" />
-                Aggregate Telemetry (Zero Individual PII Disclosure)
+                Single Master Dataset • Real-Time Predictive Telemetry
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
-              Unit Population Fatigue & Stress Distribution
+              Personnel Welfare & Stress Risk Monitoring
             </h1>
             <p className="text-xs sm:text-sm text-field-muted mt-1 max-w-2xl leading-relaxed">
-              Macro-level operational readiness and risk distribution across active unit personnel. Drill-downs are restricted exclusively to prioritized triage alerts.
+              Continuous early-warning welfare risk detection across unit personnel. The ML model predicts 30-day welfare risk probability, while current stress indicates real-time observed load.
             </p>
           </div>
 
@@ -150,7 +231,7 @@ export const WelfareDashboard: React.FC = () => {
             </Link>
 
             <button
-              onClick={fetchUnitSummary}
+              onClick={fetchData}
               disabled={isRefreshing}
               className="px-3 py-2 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors flex items-center gap-1.5"
             >
@@ -161,7 +242,7 @@ export const WelfareDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Banner */}
+      {/* Global Error Banner */}
       {errorMessage && (
         <div className="p-3.5 bg-triage-red-bg border border-triage-red-border rounded flex items-center gap-2 text-triage-red text-xs">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -172,39 +253,39 @@ export const WelfareDashboard: React.FC = () => {
       {loading ? (
         <div className="p-16 bg-field-surface border border-field-border rounded-lg flex flex-col items-center justify-center text-field-muted">
           <div className="w-6 h-6 border-2 border-field-border border-t-command-blue rounded-full animate-spin mb-2" />
-          <p className="text-xs">Loading unit distribution metrics...</p>
+          <p className="text-xs">Loading unit distribution metrics & personnel roster...</p>
         </div>
       ) : summaryData ? (
-        <div className="space-y-5">
-          {/* High-Density Key Metric Cards */}
+        <div className="space-y-6">
+          {/* Key Metric Tiles */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Personnel */}
             <div className="bg-field-surface border border-field-border rounded-lg p-4">
               <span className="text-xs font-semibold text-field-muted block">
-                Total Monitored Strength
+                Total Monitored Personnel
               </span>
               <div className="mt-2 text-2xl font-bold text-field-primary">
-                {summaryData.total_personnel}
+                {personnelList.length || summaryData.total_personnel}
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">Active unit roster</p>
+              <p className="text-[11px] text-field-muted mt-0.5">Active master dataset records</p>
             </div>
 
             {/* Average Calibrated Score */}
             <div className="bg-field-surface border border-field-border rounded-lg p-4">
               <span className="text-xs font-semibold text-field-muted block">
-                Mean Unit Fatigue Index
+                Mean Welfare Risk Score
               </span>
               <div className="mt-2 text-2xl font-bold text-field-primary flex items-baseline gap-1">
                 <span>{summaryData.average_calibrated_score}</span>
                 <span className="text-xs font-normal text-field-muted">/ 100</span>
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">Population weighted average</p>
+              <p className="text-[11px] text-field-muted mt-0.5">Calibrated ML population mean</p>
             </div>
 
             {/* Stable Baseline Percentage */}
             <div className="bg-field-surface border border-field-border rounded-lg p-4">
               <span className="text-xs font-semibold text-readiness-green block">
-                Stable / Low Risk Cohort
+                Low Risk Cohort
               </span>
               <div className="mt-2 text-2xl font-bold text-readiness-green flex items-baseline gap-1.5">
                 <span>
@@ -221,7 +302,7 @@ export const WelfareDashboard: React.FC = () => {
             {/* Elevated Concern Percentage */}
             <div className="bg-field-surface border border-field-border rounded-lg p-4">
               <span className="text-xs font-semibold text-triage-red block">
-                Elevated / High Urgency
+                Elevated Welfare Risk
               </span>
               <div className="mt-2 text-2xl font-bold text-triage-red flex items-baseline gap-1.5">
                 <span>{elevatedPercent}%</span>
@@ -229,19 +310,19 @@ export const WelfareDashboard: React.FC = () => {
                   ({summaryData.high_count + summaryData.critical_count})
                 </span>
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">High and Critical triage cases</p>
+              <p className="text-[11px] text-field-muted mt-0.5">High and Critical triage tiers</p>
             </div>
           </div>
 
-          {/* Bar Chart Section */}
+          {/* Aggregate Risk Category Breakdown Bar Chart */}
           <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-field-border">
               <div>
                 <h2 className="text-base font-bold text-field-primary">
-                  Risk Category Breakdown (Aggregate)
+                  Unit Welfare Risk Distribution
                 </h2>
                 <p className="text-xs text-field-muted mt-0.5">
-                  Macro breakdown of personnel across operational fatigue tiers.
+                  Macro breakdown across predictive operational tiers (Low &lt; 35, Moderate 35-64, High 65-84, Critical &ge; 85).
                 </p>
               </div>
 
@@ -255,7 +336,7 @@ export const WelfareDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-full h-72 pt-1">
+            <div className="w-full h-56 pt-1">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={summaryData.distribution}
@@ -292,55 +373,133 @@ export const WelfareDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Category Summary Rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {summaryData.distribution.map((cat) => (
-              <div
-                key={cat.category}
-                className="bg-field-surface border border-field-border rounded p-3.5 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                    <span className="text-xs font-semibold text-field-primary">{cat.label}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-field-primary">
-                    {cat.percentage}%
-                  </span>
+          {/* MAIN PERSONNEL OPERATIONAL ROSTER TABLE */}
+          <div className="bg-field-surface border border-field-border rounded-lg overflow-hidden space-y-4 p-5 sm:p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-field-border">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-command-blue" />
+                  <h2 className="text-base font-bold text-field-primary">
+                    Active Personnel Roster & Welfare Predictions
+                  </h2>
                 </div>
+                <p className="text-xs text-field-muted mt-0.5">
+                  Showing {filteredPersonnel.length} of {personnelList.length} personnel. Click any individual's risk score to inspect top SHAP factors & historical trajectory.
+                </p>
+              </div>
 
-                <div className="w-full bg-field-surface-subtle rounded-full h-1.5 overflow-hidden border border-field-border">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${Math.max(cat.percentage, 1)}%`,
-                      backgroundColor: cat.color,
-                    }}
+              {/* Controls: Search, Category Filter, Unit Filter */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-field-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search ID, role, or unit..."
+                    className="bg-field-surface-subtle border border-field-border rounded pl-8 pr-3 py-1.5 text-xs text-field-primary placeholder-field-muted/60 focus:outline-none focus:border-command-blue w-48 sm:w-56"
                   />
                 </div>
 
-                <div className="flex justify-between text-[11px] text-field-muted">
-                  <span>Count:</span>
-                  <strong className="text-field-primary font-medium">{cat.count} Personnel</strong>
-                </div>
-              </div>
-            ))}
-          </div>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="bg-field-surface-subtle border border-field-border text-field-primary text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-command-blue"
+                >
+                  <option value="ALL">All Categories</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MODERATE">Moderate</option>
+                  <option value="LOW">Low</option>
+                </select>
 
-          {/* Governance Protocol Stamp */}
-          <div className="bg-field-surface-subtle border border-field-border rounded p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-field-muted">
-            <div className="flex items-center gap-2.5">
-              <Shield className="w-4 h-4 text-readiness-green shrink-0" />
-              <span>
-                Data Governance: Statistical telemetry only. Individual identity unmasking requires multi-officer incident authorization in the separate triage queue.
-              </span>
+                <select
+                  value={unitFilter}
+                  onChange={(e) => setUnitFilter(e.target.value)}
+                  className="bg-field-surface-subtle border border-field-border text-field-primary text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-command-blue"
+                >
+                  <option value="ALL">All Units</option>
+                  {uniqueUnits.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <Link
-              to="/welfare/alerts"
-              className="px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-semibold transition-colors shrink-0"
-            >
-              Open Alert Triage Roster
-            </Link>
+
+            {/* Personnel Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-field-border text-field-muted font-semibold">
+                    <th className="pb-3 pr-4">Person ID</th>
+                    <th className="pb-3 pr-4">Unit</th>
+                    <th className="pb-3 pr-4">Role</th>
+                    <th className="pb-3 pr-4 text-center">Observed Stress</th>
+                    <th className="pb-3 pr-4 text-center">Welfare Risk Score</th>
+                    <th className="pb-3 pr-4">Risk Category</th>
+                    <th className="pb-3 pr-4">Latest Date</th>
+                    <th className="pb-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-field-border">
+                  {filteredPersonnel.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-field-muted">
+                        No personnel records match the current filter criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPersonnel.map((person) => (
+                      <tr
+                        key={person.person_id}
+                        onClick={() => navigate(`/welfare/personnel/${person.person_id}`)}
+                        className="hover:bg-field-surface-elevated cursor-pointer transition-colors group"
+                      >
+                        <td className="py-3 pr-4 font-mono font-bold text-command-blue">
+                          {person.person_id}
+                        </td>
+                        <td className="py-3 pr-4 text-field-primary font-medium">
+                          {person.unit_id}
+                        </td>
+                        <td className="py-3 pr-4 text-field-primary">
+                          {person.role}
+                        </td>
+                        <td className="py-3 pr-4 text-center">
+                          <span className="font-semibold text-triage-amber">
+                            {person.stress_score} <span className="text-field-muted font-normal text-[11px]">/ 10</span>
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-center">
+                          <span className="inline-flex items-center gap-1.5 font-bold text-sm text-field-primary group-hover:text-command-blue transition-colors">
+                            {person.welfare_risk_score}
+                            <span className="text-field-muted font-normal text-[11px]">/ 100</span>
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          {getRiskBadge(person.risk_category)}
+                        </td>
+                        <td className="py-3 pr-4 text-field-muted font-mono text-[11px]">
+                          {person.record_date}
+                        </td>
+                        <td className="py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/welfare/personnel/${person.person_id}`);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border text-[11px] font-semibold transition-colors"
+                          >
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3 h-3 text-field-muted group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ) : null}

@@ -112,19 +112,35 @@ export const AppLayout: React.FC = () => {
             )}
 
             {role === 'admin' && (
-              <NavLink
-                to="/admin"
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-command-blue text-white font-semibold'
-                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                  }`
-                }
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span>System Administration</span>
-              </NavLink>
+              <>
+                <NavLink
+                  to="/welfare"
+                  end
+                  className={({ isActive }) =>
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  <span>Personnel Roster</span>
+                </NavLink>
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Dataset Management</span>
+                </NavLink>
+              </>
             )}
           </nav>
 
