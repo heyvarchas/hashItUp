@@ -19,19 +19,15 @@
 
 To guarantee a clean baseline with **0 open alerts** and the persona sitting just below the high threshold:
 
-### Option A: Via Command Line (Fastest — 1 second)
-```bash
-python scripts/reset_demo_data.py
-```
-
-### Option B: Via REST API
+### Option A: Via REST API
 ```bash
 curl -X POST http://localhost:8000/hr/demo-persona/reset \
   -H "Authorization: Bearer <ADMIN_OR_OFFICER_TOKEN>"
 ```
 
-### Option C: In the UI
+### Option B: In the UI
 On the Login screen (`http://localhost:5173/login`), click the quick-fill buttons for instant credential population.
+
 
 ---
 
@@ -106,21 +102,16 @@ On the Login screen (`http://localhost:5173/login`), click the quick-fill button
 
 ## 4. Fallback & Emergency Contingency Procedures
 
-### Contingency 1: Frontend / Browser Glitch on Demo Day
-If the browser or UI encounters a network/cache issue, run the interactive terminal demo:
-```bash
-python scripts/demo_walkthrough_cli.py
-```
-*Features:* Color-coded terminal walkthrough executing each step through real backend REST API calls, showing all JSON payloads, risk calibrations, and database state transitions.
-
-### Contingency 2: Full Database Re-seed Needed
+### Contingency 1: Full Database Re-seed via Admin API
 If the database needs to be wiped and repopulated with 500 synthetic personnel from scratch:
 ```bash
-python scripts/reset_demo_data.py --full-seed
+curl -X POST http://localhost:8000/hr/seed \
+  -H "Authorization: Bearer <ADMIN_TOKEN>"
 ```
+Or via the System Admin dashboard at `http://localhost:5173/admin` clicking "Seed / Reset Database".
 *Time to complete:* $\approx 10$ seconds for 500 personnel with 6 months of historical duty, leave, training, and wellness data.
 
-### Contingency 3: Backend Diagnostic Check
+### Contingency 2: Backend Diagnostic Check
 Verify all backend endpoints are responsive:
 ```bash
 curl http://localhost:8000/health
