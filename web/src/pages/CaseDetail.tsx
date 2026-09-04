@@ -3,23 +3,21 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
-  ShieldCheck,
-  Flame,
+  Shield,
   AlertTriangle,
-  Info,
   Activity,
   FileCheck,
   CheckCircle2,
   RefreshCw,
   Send,
   Clock,
-  UserCheck,
   Check,
   HeartHandshake,
   Stethoscope,
   Briefcase,
   Coffee,
-  Sparkles,
+  Lock,
+  FileText
 } from 'lucide-react';
 
 interface RecommendationItem {
@@ -89,13 +87,13 @@ const INTERVENTION_PRESETS = [
   {
     type: 'peer_support_assigned',
     label: 'Peer Support Buddy',
-    icon: UserCheck,
+    icon: Shield,
     description: 'Assign a senior buddy or mentor for structured peer support.',
   },
   {
     type: 'commander_conference',
     label: 'Commander Conference',
-    icon: ShieldCheck,
+    icon: FileText,
     description: 'Conduct confidential welfare review with unit commanding officer.',
   },
 ];
@@ -142,7 +140,7 @@ export const CaseDetail: React.FC = () => {
       const riskData: RiskAssessmentDetail = await riskRes.json();
       setRiskDetail(riskData);
 
-      // 2. Fetch Active Alert if alert_id is provided or query alerts for this pseudonymous_id
+      // 2. Fetch Active Alert
       let targetAlert: AlertDetail | null = null;
       if (alertIdParam) {
         try {
@@ -153,12 +151,11 @@ export const CaseDetail: React.FC = () => {
             targetAlert = await alertRes.json();
           }
         } catch {
-          // fallback to list query
+          // fallback to list
         }
       }
 
       if (!targetAlert) {
-        // Query open alerts to see if this personnel has an open one
         const allAlertsRes = await fetch(`http://localhost:8000/alerts`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
@@ -257,7 +254,7 @@ export const CaseDetail: React.FC = () => {
       setInterventionsList((prev) => [recorded, ...prev]);
 
       setSubmitSuccess(
-        `Intervention recorded successfully! Alert status transitioned to "${targetStatus.toUpperCase()}".`
+        `Intervention recorded successfully. Alert status updated to "${targetStatus.toUpperCase()}".`
       );
       setNotes('');
     } catch (err: any) {
@@ -271,133 +268,131 @@ export const CaseDetail: React.FC = () => {
     switch (category) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-            <Flame className="w-3.5 h-3.5" /> Critical Urgency
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-triage-red-bg text-triage-red border border-triage-red-border">
+            Critical Urgency
           </span>
         );
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <AlertTriangle className="w-3.5 h-3.5" /> High Risk
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-triage-amber-bg text-triage-amber border border-triage-amber-border">
+            High Risk
           </span>
         );
       case 'moderate':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            <Info className="w-3.5 h-3.5" /> Moderate Risk
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-triage-blue-bg text-blue-300 border border-triage-blue-border">
+            Moderate Risk
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Low Risk
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-triage-green-bg text-readiness-green border border-triage-green-border">
+            Low / Stable
           </span>
         );
     }
   };
 
   const getGaugeStrokeColor = (score: number) => {
-    if (score >= 85) return '#f43f5e'; // rose
-    if (score >= 65) return '#f59e0b'; // amber
-    if (score >= 35) return '#3b82f6'; // blue
-    return '#10b981'; // emerald
+    if (score >= 85) return '#D6453D';
+    if (score >= 65) return '#C97A1E';
+    if (score >= 35) return '#2965A8';
+    return '#2E8B68';
   };
 
-  // Circular gauge calculations
-  const radius = 42;
+  const radius = 38;
   const circumference = 2 * Math.PI * radius;
   const scorePercent = Math.min(Math.max(riskDetail?.calibrated_score || 0, 0), 100);
   const strokeDashoffset = circumference - (scorePercent / 100) * circumference;
 
   return (
-    <div className="space-y-6">
-      {/* Navigation Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 font-sans">
+      {/* Top Header Rail */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={() => navigate('/welfare/alerts')}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-field-surface hover:bg-field-surface-elevated text-field-primary border border-field-border text-xs font-medium transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Alerts Queue
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Triage Queue</span>
         </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchCaseData}
-            disabled={isRefreshing}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl text-xs font-semibold transition flex items-center gap-2"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh Case
-          </button>
-        </div>
+        <button
+          onClick={fetchCaseData}
+          disabled={isRefreshing}
+          className="px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors flex items-center gap-1.5"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-field-muted ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>Refresh Case</span>
+        </button>
       </div>
 
-      {/* Hero Header & Circular Risk Gauge */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5">
+      {/* Case Dossier Summary Panel */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                <ShieldCheck className="w-3.5 h-3.5" /> Confidential Case Review
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
+                Confidential Case Review
               </span>
 
               {activeAlert && (
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold border ${
                     activeAlert.status === 'open'
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                      ? 'bg-triage-red-bg text-triage-red border-triage-red-border'
                       : activeAlert.status === 'acknowledged'
-                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                      ? 'bg-triage-amber-bg text-triage-amber border-triage-amber-border'
+                      : 'bg-triage-green-bg text-readiness-green border-triage-green-border'
                   }`}
                 >
                   <span
-                    className={`w-2 h-2 rounded-full ${
+                    className={`w-1.5 h-1.5 rounded-full ${
                       activeAlert.status === 'open'
-                        ? 'bg-rose-400 animate-pulse'
+                        ? 'bg-triage-red'
                         : activeAlert.status === 'acknowledged'
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-400'
+                        ? 'bg-triage-amber'
+                        : 'bg-readiness-green'
                     }`}
                   />
-                  Alert Status: {activeAlert.status}
+                  Alert Status: {activeAlert.status.toUpperCase()}
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
               Clinical Assessment & Intervention Triage
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 font-mono">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-field-muted">
               <div>
-                Pseudonym:{' '}
-                <span className="text-slate-200 font-bold">{pseudonymousId}</span>
+                Pseudonym: <strong className="text-field-primary font-medium">{pseudonymousId}</strong>
               </div>
               {activeAlert && (
-                <div className="border-l border-slate-800 pl-4 text-slate-500">
-                  Alert Ref: <span className="text-slate-300 font-mono">{activeAlert.id.slice(0, 8)}...</span>
+                <div className="border-l border-field-border pl-4">
+                  Alert ID: <span className="text-field-primary">{activeAlert.id.slice(0, 10)}</span>
                 </div>
               )}
+              <div className="border-l border-field-border pl-4 flex items-center gap-1">
+                <Lock className="w-3 h-3 text-readiness-green" />
+                <span>Encrypted & De-identified</span>
+              </div>
             </div>
           </div>
 
-          {/* Interactive Circular Risk Gauge */}
+          {/* High-Precision Risk Score Gauge */}
           {riskDetail && (
-            <div className="flex items-center gap-5 bg-slate-950/70 border border-slate-800/90 rounded-2xl p-4 sm:p-5 shrink-0">
-              <div className="relative flex items-center justify-center w-28 h-28">
+            <div className="flex items-center gap-4 bg-field-surface-subtle border border-field-border rounded p-3.5 shrink-0">
+              <div className="relative flex items-center justify-center w-20 h-20">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  {/* Track Circle */}
                   <circle
                     cx="50"
                     cy="50"
                     r={radius}
-                    stroke="currentColor"
+                    stroke="#222D37"
                     strokeWidth="8"
                     fill="transparent"
-                    className="text-slate-800/80"
                   />
-                  {/* Active Value Arc */}
                   <circle
                     cx="50"
                     cy="50"
@@ -408,29 +403,23 @@ export const CaseDetail: React.FC = () => {
                     strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
                     fill="transparent"
-                    className="transition-all duration-1000 ease-out"
                   />
                 </svg>
-                {/* Center Gauge Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl font-black text-white leading-none">
+                  <span className="text-xl font-bold text-field-primary leading-none">
                     {riskDetail.calibrated_score}
                   </span>
-                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mt-1">
-                    Risk / 100
+                  <span className="text-[9px] text-field-muted mt-0.5">
+                    / 100
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Triage Tier</span>
+              <div className="space-y-1 text-xs">
+                <span className="text-field-muted block">Risk Tier</span>
                 <div>{getRiskCategoryBadge(riskDetail.risk_category)}</div>
-                <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono pt-1">
-                  <span>Prob: {(riskDetail.probability_score * 100).toFixed(1)}%</span>
-                </div>
-                <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>{new Date(riskDetail.computed_at).toLocaleDateString()}</span>
+                <div className="text-[11px] text-field-muted pt-0.5">
+                  Probability: {(riskDetail.probability_score * 100).toFixed(1)}%
                 </div>
               </div>
             </div>
@@ -438,85 +427,84 @@ export const CaseDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Global Error Message */}
+      {/* Global Error Banner */}
       {errorMessage && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-400 text-sm">
-          <AlertTriangle className="w-5 h-5 shrink-0" />
+        <div className="p-3.5 bg-triage-red-bg border border-triage-red-border rounded flex items-center gap-2 text-triage-red text-xs">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="p-16 bg-slate-900/40 border border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-500">
-          <div className="w-9 h-9 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-3" />
-          <p className="text-xs font-medium text-slate-400">Loading case assessment and alerts...</p>
+        <div className="p-16 bg-field-surface border border-field-border rounded-lg flex flex-col items-center justify-center text-field-muted">
+          <div className="w-6 h-6 border-2 border-field-border border-t-command-blue rounded-full animate-spin mb-2" />
+          <p className="text-xs">Loading case assessment and triage logs...</p>
         </div>
       ) : riskDetail ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left 7 Columns: Contributing Factors & Recommendations */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Contributing Factors Breakdown */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Left 7 Cols: Factors, Recommendations, History */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* Contributing Factors */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-5">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-field-border">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-indigo-400" />
-                  <h2 className="text-lg font-bold text-white">Clinical & Operational Contributing Factors</h2>
+                  <Activity className="w-4 h-4 text-field-muted" />
+                  <h2 className="text-sm font-bold text-field-primary">
+                    Identified Operational & Clinical Factors
+                  </h2>
                 </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg">
+                <span className="text-xs text-field-muted px-2 py-0.5 rounded bg-field-surface-elevated border border-field-border font-medium">
                   {riskDetail.contributing_factors?.length || 0} Indicators
                 </span>
               </div>
 
               {riskDetail.contributing_factors && riskDetail.contributing_factors.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {riskDetail.contributing_factors.map((factor, idx) => (
                     <div
                       key={idx}
-                      className="p-4 bg-slate-950/70 border border-slate-800/90 hover:border-slate-700/80 transition rounded-2xl flex items-start gap-3.5"
+                      className="p-3 bg-field-surface-subtle border border-field-border rounded flex items-start gap-2.5"
                     >
-                      <div className="w-6 h-6 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs sm:text-sm font-semibold text-slate-200">
-                          {factor}
-                        </p>
-                      </div>
+                      <span className="w-1.5 h-1.5 rounded-full bg-triage-amber shrink-0 mt-1.5" />
+                      <p className="text-xs text-field-primary leading-relaxed font-medium">
+                        {factor}
+                      </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 bg-slate-950/40 border border-slate-800/60 rounded-2xl text-center text-slate-500 text-xs">
-                  No significant risk factor flags identified in current monitoring cycle.
+                <div className="p-4 bg-field-surface-subtle border border-field-border rounded text-center text-xs text-field-muted">
+                  No active risk factor deviations recorded.
                 </div>
               )}
             </div>
 
-            {/* System Recommended Clinical & Command Actions */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <FileCheck className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-lg font-bold text-white">System Recommended Actions</h2>
+            {/* System Recommended Proposals */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-5">
+              <div className="flex items-center gap-2 pb-3 mb-3 border-b border-field-border">
+                <FileCheck className="w-4 h-4 text-readiness-green" />
+                <h2 className="text-sm font-bold text-field-primary">
+                  System Suggested Operational Actions
+                </h2>
               </div>
 
               {riskDetail.recommendations && riskDetail.recommendations.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {riskDetail.recommendations.map((rec) => (
                     <div
                       key={rec.id}
-                      className="p-4 bg-slate-950/70 border border-emerald-500/20 rounded-2xl space-y-2"
+                      className="p-3.5 bg-field-surface-subtle border border-field-border rounded space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
+                        <span className="text-xs font-semibold text-readiness-green uppercase tracking-normal">
                           {rec.recommendation_type.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-mono">
+                        <span className="text-[11px] text-field-muted">
                           {new Date(rec.generated_at).toLocaleDateString()}
                         </span>
                       </div>
                       {rec.rationale && (
-                        <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xs text-field-primary leading-relaxed">
                           {rec.rationale}
                         </p>
                       )}
@@ -524,43 +512,45 @@ export const CaseDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-6 bg-slate-950/40 border border-slate-800/60 rounded-2xl text-center text-slate-400 text-xs">
-                  Routine monitoring protocol active. No immediate clinical escalations required.
+                <div className="p-4 bg-field-surface-subtle border border-field-border rounded text-center text-xs text-field-muted">
+                  Standard operational protocol active. No immediate clinical escalation required.
                 </div>
               )}
             </div>
 
-            {/* Past Interventions History Timeline */}
+            {/* Recorded Intervention Audit Log */}
             {interventionsList.length > 0 && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-indigo-400" />
-                  <h2 className="text-lg font-bold text-white">Recorded Interventions History</h2>
+              <div className="bg-field-surface border border-field-border rounded-lg p-5">
+                <div className="flex items-center gap-2 pb-3 mb-3 border-b border-field-border">
+                  <Clock className="w-4 h-4 text-field-muted" />
+                  <h2 className="text-sm font-bold text-field-primary">
+                    Logged Officer Interventions
+                  </h2>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {interventionsList.map((item) => (
                     <div
                       key={item.id}
-                      className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-2"
+                      className="p-3.5 bg-field-surface-subtle border border-field-border rounded space-y-1.5 text-xs"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-indigo-300 uppercase tracking-wide">
+                        <span className="font-semibold text-field-primary">
                           {item.intervention_type.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {new Date(item.recorded_at).toLocaleDateString()} {new Date(item.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-field-muted text-[11px]">
+                          {new Date(item.recorded_at).toLocaleString()}
                         </span>
                       </div>
                       {item.notes && (
-                        <p className="text-xs text-slate-300 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <p className="text-field-muted bg-field-surface p-2.5 rounded border border-field-border text-xs leading-relaxed">
                           {item.notes}
                         </p>
                       )}
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                        <span>Recorded by Officer: <span className="font-mono text-slate-400">{item.recorded_by_person_id?.slice(0, 8)}...</span></span>
+                      <div className="flex items-center gap-2 text-[11px] text-field-muted">
+                        <span>Logged by Officer: {item.recorded_by_person_id?.slice(0, 8)}...</span>
                         {item.alert_status && (
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold uppercase">
+                          <span className="px-1.5 py-0.5 rounded bg-field-border text-field-primary font-medium uppercase text-[10px]">
                             {item.alert_status}
                           </span>
                         )}
@@ -572,52 +562,45 @@ export const CaseDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Right 5 Columns: Intervention Recording Form (POST /interventions) */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-indigo-500/30 rounded-3xl p-6 sm:p-7 shadow-xl">
-              <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
-                <div className="space-y-0.5">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 uppercase tracking-wider">
-                    <HeartHandshake className="w-4 h-4" /> Intervention Action Form
-                  </div>
-                  <h3 className="text-base font-bold text-white">Record Officer Intervention</h3>
+          {/* Right 5 Cols: Intervention Recording Console */}
+          <div className="lg:col-span-5 space-y-5">
+            <div className="bg-field-surface border border-field-border rounded-lg p-5">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-field-border">
+                <div>
+                  <h3 className="text-sm font-bold text-field-primary">
+                    Record Officer Intervention
+                  </h3>
+                  <p className="text-[11px] text-field-muted">Formal action entry and alert state transition</p>
                 </div>
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
                   POST /interventions
                 </span>
               </div>
 
               {submitSuccess && (
-                <div className="mb-5 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Action Recorded</span>
+                <div className="mb-4 p-3 bg-triage-green-bg border border-triage-green-border rounded text-readiness-green text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>Action Recorded Successfully</span>
                   </div>
-                  <p>{submitSuccess}</p>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/welfare/alerts')}
-                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition"
-                  >
-                    View Updated Alerts Queue <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                  </button>
+                  <p className="text-[11px]">{submitSuccess}</p>
                 </div>
               )}
 
               {formError && (
-                <div className="mb-5 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-2.5 text-rose-400 text-xs">
+                <div className="mb-4 p-3 bg-triage-red-bg border border-triage-red-border rounded flex items-center gap-2 text-triage-red text-xs">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{formError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleRecordIntervention} className="space-y-5">
-                {/* Quick Presets */}
+              <form onSubmit={handleRecordIntervention} className="space-y-4">
+                {/* Intervention Presets */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Quick Action Presets
+                  <label className="block text-xs font-semibold text-field-primary mb-1.5">
+                    Select Standard Welfare Action
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {INTERVENTION_PRESETS.map((preset) => {
                       const Icon = preset.icon;
                       const isSelected = selectedType === preset.type;
@@ -626,119 +609,98 @@ export const CaseDetail: React.FC = () => {
                           key={preset.type}
                           type="button"
                           onClick={() => setSelectedType(preset.type)}
-                          className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+                          className={`p-2.5 rounded border text-left transition-colors flex flex-col gap-1 ${
                             isSelected
-                              ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm'
-                              : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                              ? 'bg-command-blue text-white border-blue-400 font-semibold'
+                              : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`} />
-                            {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                            <Icon className="w-3.5 h-3.5" />
+                            {isSelected && <Check className="w-3 h-3" />}
                           </div>
-                          <span className="text-xs font-semibold leading-tight">{preset.label}</span>
+                          <span className="text-xs leading-tight">{preset.label}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Intervention Type Select */}
+                {/* Target Alert Status */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    Intervention Type Category
-                  </label>
-                  <select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="mandatory_rest_leave">Emergency Rest / Leave Granted</option>
-                    <option value="psychological_counseling">Clinical Psychological Counseling</option>
-                    <option value="duty_reassignment">Duty Reassignment (Light / Base Duties)</option>
-                    <option value="medical_referral">Medical Specialist Referral</option>
-                    <option value="peer_support_assigned">Peer Support / Buddy Assigned</option>
-                    <option value="commander_conference">Unit Commander Welfare Conference</option>
-                    <option value="routine_checkin">Routine Supportive Follow-up</option>
-                    <option value="other_support">Other Direct Supportive Action</option>
-                  </select>
-                </div>
-
-                {/* Target Alert Resolution Status */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    Target Alert Status
+                  <label className="block text-xs font-semibold text-field-primary mb-1.5">
+                    Target Alert Resolution Status
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setTargetStatus('resolved')}
-                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                      className={`p-2 rounded border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                         targetStatus === 'resolved'
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-sm'
-                          : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-triage-green-bg border-triage-green-border text-readiness-green'
+                          : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary'
                       }`}
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Mark Resolved
+                      <span>Mark Resolved</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setTargetStatus('acknowledged')}
-                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                      className={`p-2 rounded border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                         targetStatus === 'acknowledged'
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm'
-                          : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-triage-amber-bg border-triage-amber-border text-triage-amber'
+                          : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary'
                       }`}
                     >
                       <Clock className="w-3.5 h-3.5" />
-                      Keep Acknowledged
+                      <span>Keep In Review</span>
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-field-muted mt-1">
                     {targetStatus === 'resolved'
-                      ? 'Resolving this alert removes it from the active Open queue.'
-                      : 'Acknowledging retains the alert for ongoing clinical follow-up.'}
+                      ? 'Resolving this alert removes it from the active Open triage queue.'
+                      : 'Retains this case for ongoing clinical follow-up.'}
                   </p>
                 </div>
 
                 {/* Clinical Notes */}
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-semibold text-field-primary">
                       Intervention Notes & Rationale
                     </label>
-                    <span className="text-[10px] text-slate-500 font-mono">Encrypted at rest</span>
+                    <span className="text-[11px] text-field-muted">Encrypted at rest</span>
                   </div>
                   <textarea
                     rows={4}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Document discussion points, clinical recommendations, follow-up timelines, or duty adjustments..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    className="w-full bg-field-surface-subtle border border-field-border rounded p-2.5 text-xs text-field-primary placeholder-field-muted/60 focus:outline-none focus:border-command-blue resize-none"
                   />
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit Action */}
                 <button
                   type="submit"
                   disabled={isSubmitting || !activeAlert}
-                  className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 bg-command-blue hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs rounded transition-colors flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      Record Intervention & Update Alert
+                      <span>Commit Intervention & Update Case</span>
                     </>
                   )}
                 </button>
               </form>
 
-              <div className="mt-5 pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                <span>Audit Attribution: Officer Person ID {user?.claims.person_id?.slice(0, 8)}...</span>
+              <div className="mt-4 pt-3 border-t border-field-border text-[11px] text-field-muted flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-field-muted shrink-0" />
+                <span>Officer Audit Attribution: ID {user?.claims.person_id?.slice(0, 8)}...</span>
               </div>
             </div>
           </div>

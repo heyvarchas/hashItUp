@@ -2,17 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  ShieldCheck,
+  Shield,
   RefreshCw,
   AlertTriangle,
-  ChevronRight,
-  Users,
-  Activity,
-  CheckCircle2,
-  Flame,
-  Info,
   Lock,
-  BarChart3,
+  AlertCircle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -45,23 +39,27 @@ interface UnitSummaryData {
   acknowledged_alerts_count: number;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  critical: '#D6453D',
+  high: '#C97A1E',
+  moderate: '#2965A8',
+  low: '#2E8B68',
+};
+
 const CustomBarTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as RiskCategoryStat;
     return (
-      <div className="bg-slate-950/95 border border-slate-700/80 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md text-xs space-y-1">
-        <div className="flex items-center gap-2 font-bold text-white">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+      <div className="bg-field-surface border border-field-border rounded p-3 text-xs space-y-1 shadow-lg">
+        <div className="flex items-center gap-2 font-semibold text-field-primary">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
           <span>{data.label}</span>
         </div>
-        <div className="text-slate-300 font-semibold">
-          Personnel Count: <span className="font-mono text-white font-bold">{data.count}</span>
+        <div className="text-field-muted">
+          Personnel Count: <strong className="text-field-primary">{data.count}</strong>
         </div>
-        <div className="text-slate-400">
-          Share of Unit: <span className="font-mono text-indigo-300 font-bold">{data.percentage}%</span>
-        </div>
-        <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
-          Aggregate statistic (Privacy preserved)
+        <div className="text-field-muted">
+          Unit Proportion: <strong className="text-field-primary">{data.percentage}%</strong>
         </div>
       </div>
     );
@@ -93,7 +91,12 @@ export const WelfareDashboard: React.FC = () => {
       }
 
       const data: UnitSummaryData = await res.json();
-      setSummaryData(data);
+      // Ensure colors match our named palette
+      const formattedDist = data.distribution.map((d) => ({
+        ...d,
+        color: CATEGORY_COLORS[d.category] || d.color,
+      }));
+      setSummaryData({ ...data, distribution: formattedDist });
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred while loading unit summary statistics.');
     } finally {
@@ -115,200 +118,170 @@ export const WelfareDashboard: React.FC = () => {
     : '0';
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-r from-emerald-950/40 via-slate-900/70 to-slate-900/50 border border-emerald-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-              <ShieldCheck className="w-3.5 h-3.5" /> Unit Welfare & Summary Tab
+    <div className="space-y-6 font-sans">
+      {/* Unit Command Header */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
+                Unit Command Overview
+              </span>
+              <span className="text-xs text-field-muted flex items-center gap-1">
+                <Lock className="w-3 h-3 text-readiness-green" />
+                Aggregate Telemetry (Zero Individual PII Disclosure)
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Unit Population Stress & Health Distribution
+            <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
+              Unit Population Fatigue & Stress Distribution
             </h1>
-            <p className="text-slate-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Aggregated population metrics and macro-level risk distribution across all active unit personnel.
-              Strictly non-identifiable to guarantee personnel privacy.
+            <p className="text-xs sm:text-sm text-field-muted mt-1 max-w-2xl leading-relaxed">
+              Macro-level operational readiness and risk distribution across active unit personnel. Drill-downs are restricted exclusively to prioritized triage alerts.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             <Link
               to="/welfare/alerts"
-              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold tracking-wide transition shadow-lg shadow-rose-600/25 flex items-center gap-2"
+              className="px-3.5 py-2 bg-triage-red-bg hover:bg-red-950/60 text-triage-red border border-triage-red-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5"
             >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Open Alert Queue ({summaryData?.open_alerts_count ?? 0})
-              <ChevronRight className="w-3.5 h-3.5" />
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Open Triage Queue ({summaryData?.open_alerts_count ?? 0})</span>
             </Link>
 
             <button
               onClick={fetchUnitSummary}
               disabled={isRefreshing}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold tracking-wide transition shadow-sm flex items-center gap-2"
+              className="px-3 py-2 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors flex items-center gap-1.5"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh Data
+              <RefreshCw className={`w-3.5 h-3.5 text-field-muted ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </button>
           </div>
-        </div>
-
-        {/* Strict Privacy Protocol Notice */}
-        <div className="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Aggregate-Only Protection Active: No individual drill-down or PII disclosure.</span>
-          </div>
-          <span className="font-mono text-slate-500 text-[11px]">
-            API: GET /dashboard/unit-summary
-          </span>
         </div>
       </div>
 
       {/* Error Banner */}
       {errorMessage && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-400 text-sm">
-          <AlertTriangle className="w-5 h-5 shrink-0" />
+        <div className="p-3.5 bg-triage-red-bg border border-triage-red-border rounded flex items-center gap-2 text-triage-red text-xs">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="p-16 bg-slate-900/40 border border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-500">
-          <div className="w-9 h-9 border-3 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-3" />
-          <p className="text-xs font-medium text-slate-400">Loading aggregate unit distribution...</p>
+        <div className="p-16 bg-field-surface border border-field-border rounded-lg flex flex-col items-center justify-center text-field-muted">
+          <div className="w-6 h-6 border-2 border-field-border border-t-command-blue rounded-full animate-spin mb-2" />
+          <p className="text-xs">Loading unit distribution metrics...</p>
         </div>
       ) : summaryData ? (
-        <div className="space-y-6">
-          {/* Key Aggregate Metric Cards */}
+        <div className="space-y-5">
+          {/* High-Density Key Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Monitored Personnel */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  Total Personnel
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                  <Users className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 text-3xl font-black text-white">
+            {/* Total Personnel */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4">
+              <span className="text-xs font-semibold text-field-muted block">
+                Total Monitored Strength
+              </span>
+              <div className="mt-2 text-2xl font-bold text-field-primary">
                 {summaryData.total_personnel}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Active monitored cohort</p>
+              <p className="text-[11px] text-field-muted mt-0.5">Active unit roster</p>
             </div>
 
-            {/* Average Population Calibrated Score */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  Mean Risk Index
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <Activity className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 text-3xl font-black text-white flex items-baseline gap-1.5">
+            {/* Average Calibrated Score */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4">
+              <span className="text-xs font-semibold text-field-muted block">
+                Mean Unit Fatigue Index
+              </span>
+              <div className="mt-2 text-2xl font-bold text-field-primary flex items-baseline gap-1">
                 <span>{summaryData.average_calibrated_score}</span>
-                <span className="text-xs font-semibold text-slate-500">/ 100</span>
+                <span className="text-xs font-normal text-field-muted">/ 100</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Population weighted average</p>
+              <p className="text-[11px] text-field-muted mt-0.5">Population weighted average</p>
             </div>
 
-            {/* Low / Baseline Risk Percentage */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">
-                  Low / Stable Baseline
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 text-3xl font-black text-emerald-400 flex items-baseline gap-1.5">
+            {/* Stable Baseline Percentage */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4">
+              <span className="text-xs font-semibold text-readiness-green block">
+                Stable / Low Risk Cohort
+              </span>
+              <div className="mt-2 text-2xl font-bold text-readiness-green flex items-baseline gap-1.5">
                 <span>
                   {summaryData.total_personnel > 0
                     ? ((summaryData.low_count / summaryData.total_personnel) * 100).toFixed(1)
                     : '0'}
                   %
                 </span>
-                <span className="text-xs font-normal text-slate-400">({summaryData.low_count})</span>
+                <span className="text-xs font-normal text-field-muted">({summaryData.low_count})</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Optimal wellness & resilience</p>
+              <p className="text-[11px] text-field-muted mt-0.5">Nominal readiness threshold</p>
             </div>
 
-            {/* High / Critical Concern Percentage */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-rose-400 font-semibold uppercase tracking-wider">
-                  Elevated Concern
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                  <Flame className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 text-3xl font-black text-rose-400 flex items-baseline gap-1.5">
+            {/* Elevated Concern Percentage */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4">
+              <span className="text-xs font-semibold text-triage-red block">
+                Elevated / High Urgency
+              </span>
+              <div className="mt-2 text-2xl font-bold text-triage-red flex items-baseline gap-1.5">
                 <span>{elevatedPercent}%</span>
-                <span className="text-xs font-normal text-slate-400">
+                <span className="text-xs font-normal text-field-muted">
                   ({summaryData.high_count + summaryData.critical_count})
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">High & Critical urgency cases</p>
+              <p className="text-[11px] text-field-muted mt-0.5">High and Critical triage cases</p>
             </div>
           </div>
 
-          {/* Aggregate-Only Bar Chart Section */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          {/* Bar Chart Section */}
+          <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-field-border">
               <div>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-indigo-400" />
-                  <h2 className="text-lg font-bold text-white">Risk Category Distribution</h2>
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Macro breakdown of unit personnel across triage tiers. Pure aggregate summary with zero record drill-down.
+                <h2 className="text-base font-bold text-field-primary">
+                  Risk Category Breakdown (Aggregate)
+                </h2>
+                <p className="text-xs text-field-muted mt-0.5">
+                  Macro breakdown of personnel across operational fatigue tiers.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 {summaryData.distribution.map((item) => (
                   <div key={item.category} className="flex items-center gap-1.5 text-xs">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-slate-300 font-medium">{item.label}</span>
+                    <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: item.color }} />
+                    <span className="text-field-muted">{item.label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recharts Bar Chart */}
-            <div className="w-full h-80 pt-2">
+            <div className="w-full h-72 pt-1">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={summaryData.distribution}
-                  margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                  margin={{ top: 10, right: 15, left: -20, bottom: 10 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <CartesianGrid strokeDasharray="2 2" stroke="#222D37" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#8294A2"
+                    fontSize={11}
                     tickLine={false}
-                    axisLine={{ stroke: '#334155' }}
+                    axisLine={{ stroke: '#222D37' }}
                   />
                   <YAxis
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#8294A2"
+                    fontSize={11}
                     tickLine={false}
-                    axisLine={{ stroke: '#334155' }}
+                    axisLine={{ stroke: '#222D37' }}
                     allowDecimals={false}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: '#1e293b33' }} />
+                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: '#141C22' }} />
                   <Bar
                     dataKey="count"
-                    radius={[8, 8, 0, 0]}
-                    barSize={60}
-                    isAnimationActive={true}
-                    animationDuration={800}
+                    radius={[2, 2, 0, 0]}
+                    barSize={48}
+                    isAnimationActive={false}
                   >
                     {summaryData.distribution.map((entry) => (
                       <Cell key={`cell-${entry.category}`} fill={entry.color} />
@@ -319,78 +292,54 @@ export const WelfareDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Distribution Category Breakdown Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {summaryData.distribution.map((cat) => {
-              const getIcon = () => {
-                switch (cat.category) {
-                  case 'critical':
-                    return <Flame className="w-4 h-4 text-rose-400" />;
-                  case 'high':
-                    return <AlertTriangle className="w-4 h-4 text-amber-400" />;
-                  case 'moderate':
-                    return <Info className="w-4 h-4 text-blue-400" />;
-                  default:
-                    return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
-                }
-              };
-
-              return (
-                <div
-                  key={cat.category}
-                  className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getIcon()}
-                      <span className="text-xs font-bold text-white">{cat.label}</span>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-slate-300">
-                      {cat.percentage}%
-                    </span>
+          {/* Category Summary Rows */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {summaryData.distribution.map((cat) => (
+              <div
+                key={cat.category}
+                className="bg-field-surface border border-field-border rounded p-3.5 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                    <span className="text-xs font-semibold text-field-primary">{cat.label}</span>
                   </div>
-
-                  <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${Math.max(cat.percentage, 2)}%`,
-                        backgroundColor: cat.color,
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center text-[11px] text-slate-400">
-                    <span>Monitored Cohort</span>
-                    <span className="font-bold text-white font-mono">{cat.count} Personnel</span>
-                  </div>
+                  <span className="text-xs font-semibold text-field-primary">
+                    {cat.percentage}%
+                  </span>
                 </div>
-              );
-            })}
+
+                <div className="w-full bg-field-surface-subtle rounded-full h-1.5 overflow-hidden border border-field-border">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.max(cat.percentage, 1)}%`,
+                      backgroundColor: cat.color,
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-between text-[11px] text-field-muted">
+                  <span>Count:</span>
+                  <strong className="text-field-primary font-medium">{cat.count} Personnel</strong>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Privacy Protocol Guarantee Footer Card */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Privacy & Data Governance Policy
-                </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Aggregate distributions are computed using de-identified telemetry. Drill-down into individual records is restricted exclusively to active triage alerts in the separate queue.
-                </p>
-              </div>
+          {/* Governance Protocol Stamp */}
+          <div className="bg-field-surface-subtle border border-field-border rounded p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-field-muted">
+            <div className="flex items-center gap-2.5">
+              <Shield className="w-4 h-4 text-readiness-green shrink-0" />
+              <span>
+                Data Governance: Statistical telemetry only. Individual identity unmasking requires multi-officer incident authorization in the separate triage queue.
+              </span>
             </div>
-
             <Link
               to="/welfare/alerts"
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold tracking-wide transition shadow-sm flex items-center gap-1.5 shrink-0"
+              className="px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-semibold transition-colors shrink-0"
             >
-              <span>Go to Alert Queue</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              Open Alert Triage Roster
             </Link>
           </div>
         </div>

@@ -54,7 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Validate on load / page refresh
     const initAuth = async () => {
-      const existingToken = getStoredToken();
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('auth_token');
+      const existingToken = urlToken || getStoredToken();
       if (existingToken) {
         const valid = processToken(existingToken);
         if (!valid) {

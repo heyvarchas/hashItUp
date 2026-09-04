@@ -1,36 +1,73 @@
 import React from 'react';
-import { Shield, Database, Server } from 'lucide-react';
+import { Database, Server, Key, CheckCircle2, Lock } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-amber-950/40 via-slate-900/60 to-slate-900/40 border border-amber-500/20 rounded-2xl p-6 md:p-8 backdrop-blur-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          <Shield className="w-3.5 h-3.5" /> System Administrator View
+    <div className="space-y-6 font-sans">
+      {/* System Administration Header */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
+            System Administration Console
+          </span>
+          <span className="text-xs text-field-muted flex items-center gap-1">
+            <Lock className="w-3 h-3 text-readiness-green" />
+            Security Level: Top Secret Defense Infrastructure
+          </span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          System Administration & Audit
+        <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
+          System Administration & Cryptographic Audit
         </h1>
-        <p className="text-slate-400 text-sm mt-2 max-w-2xl leading-relaxed">
-          Manage system configurations, user accounts, and cryptographic key rotation policies.
+        <p className="text-xs sm:text-sm text-field-muted mt-1 max-w-2xl leading-relaxed">
+          Manage system configurations, dual-schema pseudonymity isolation policies, telemetry endpoints, and cryptographic key rotation cycles.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <Server className="w-5 h-5 text-amber-400" />
-            <h3 className="text-sm font-semibold text-white">Backend Status</h3>
+      {/* Status Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between pb-2 border-b border-field-border">
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-command-blue" />
+              <h3 className="text-xs font-bold text-field-primary">FastAPI Backend</h3>
+            </div>
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-readiness-green">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Nominal
+            </span>
           </div>
-          <p className="text-xs text-slate-400">FastAPI backend operational on port 8000.</p>
+          <p className="text-xs text-field-muted">
+            Service active on port 8000. Real-time predictive risk scoring pipelines online.
+          </p>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <Database className="w-5 h-5 text-amber-400" />
-            <h3 className="text-sm font-semibold text-white">Database Schemas</h3>
+        <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between pb-2 border-b border-field-border">
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-readiness-green" />
+              <h3 className="text-xs font-bold text-field-primary">Dual-Schema Isolation</h3>
+            </div>
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-readiness-green">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Enforced
+            </span>
           </div>
-          <p className="text-xs text-slate-400">Dual schema architecture (identity, analytics) isolated.</p>
+          <p className="text-xs text-field-muted">
+            Identity schema strictly decoupled from analytics and assessment tables.
+          </p>
+        </div>
+
+        <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between pb-2 border-b border-field-border">
+            <div className="flex items-center gap-2">
+              <Key className="w-4 h-4 text-triage-amber" />
+              <h3 className="text-xs font-bold text-field-primary">Key Rotation</h3>
+            </div>
+            <span className="text-[11px] text-field-muted font-mono">
+              Auto: 90 Days
+            </span>
+          </div>
+          <p className="text-xs text-field-muted">
+            Cryptographic salting and token generation functioning under defense compliance standards.
+          </p>
         </div>
       </div>
     </div>

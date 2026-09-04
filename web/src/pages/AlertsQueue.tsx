@@ -3,17 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   AlertTriangle,
-  Flame,
-  ShieldAlert,
   Clock,
-  Filter,
   RefreshCw,
-  ChevronRight,
-  UserCheck,
-  CheckCircle2,
-  Info,
-  ArrowUpDown,
   Search,
+  CheckCircle2,
+  Lock,
+  FileSearch,
 } from 'lucide-react';
 
 export interface AlertItem {
@@ -116,26 +111,26 @@ export const AlertsQueue: React.FC = () => {
     switch (severity) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-            <Flame className="w-3.5 h-3.5" /> CRITICAL
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-red-bg text-triage-red border border-triage-red-border">
+            Critical
           </span>
         );
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <AlertTriangle className="w-3.5 h-3.5" /> HIGH
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-amber-bg text-triage-amber border border-triage-amber-border">
+            High Risk
           </span>
         );
       case 'moderate':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            <Info className="w-3.5 h-3.5" /> MODERATE
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-blue-bg text-blue-300 border border-triage-blue-border">
+            Moderate
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-500/15 text-slate-300 border border-slate-500/30">
-            INFO
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-field-surface-elevated text-field-muted border border-field-border">
+            Info
           </span>
         );
     }
@@ -145,20 +140,20 @@ export const AlertsQueue: React.FC = () => {
     switch (status) {
       case 'open':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" /> Open
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-red-bg text-triage-red border border-triage-red-border">
+            <span className="w-1.5 h-1.5 rounded-full bg-triage-red" /> Open
           </span>
         );
       case 'acknowledged':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Acknowledged
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-amber-bg text-triage-amber border border-triage-amber-border">
+            <span className="w-1.5 h-1.5 rounded-full bg-triage-amber" /> In Review
           </span>
         );
       case 'resolved':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Resolved
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-triage-green-bg text-readiness-green border border-triage-green-border">
+            <CheckCircle2 className="w-3 h-3" /> Resolved
           </span>
         );
       default:
@@ -170,89 +165,89 @@ export const AlertsQueue: React.FC = () => {
   const criticalCounts = alerts.filter((a) => a.severity === 'critical' && a.status === 'open').length;
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-rose-950/40 via-slate-900/60 to-slate-900/40 border border-rose-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-6 font-sans">
+      {/* Triage Manifest Header */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold uppercase tracking-wider mb-3">
-              <ShieldAlert className="w-3.5 h-3.5" /> Early Intervention Triage
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-field-surface-elevated text-field-muted border border-field-border">
+                Welfare Triage Roster
+              </span>
+              <span className="text-xs text-field-muted flex items-center gap-1">
+                <Lock className="w-3 h-3 text-readiness-green" />
+                De-identified Personnel Cases
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Welfare Alert Queue
+            <h1 className="text-xl sm:text-2xl font-bold text-field-primary tracking-tight">
+              Active Welfare Concerns & Fatigue Triage
             </h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-              Prioritized triage queue of active welfare concerns. Click any alert to inspect clinical risk factors, operational history, and record interventions.
+            <p className="text-xs sm:text-sm text-field-muted mt-1 max-w-2xl leading-relaxed">
+              Prioritized triage queue of personnel exhibiting elevated operational strain or requesting welfare outreach. Select a case to inspect workload factors and log interventions.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={fetchAlerts}
               disabled={isRefreshing}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold tracking-wide transition shadow-sm flex items-center gap-2"
+              className="px-3 py-2 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors flex items-center gap-1.5"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`w-3.5 h-3.5 text-field-muted ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh Queue</span>
             </button>
           </div>
         </div>
 
-        {/* Quick Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-[11px] text-slate-400 uppercase font-semibold">Active Open Alerts</span>
-            <div className="text-2xl font-bold text-white mt-1">{openCounts}</div>
+        {/* Triage Summary Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-field-border text-xs">
+          <div className="bg-field-surface-subtle p-3 rounded border border-field-border">
+            <span className="text-field-muted block">Active Open Cases</span>
+            <span className="text-xl font-bold text-field-primary mt-1 block">{openCounts}</span>
           </div>
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-[11px] text-rose-400 uppercase font-semibold">Critical Urgency</span>
-            <div className="text-2xl font-bold text-rose-400 mt-1">{criticalCounts}</div>
+          <div className="bg-field-surface-subtle p-3 rounded border border-field-border">
+            <span className="text-triage-red block">Critical Urgency</span>
+            <span className="text-xl font-bold text-triage-red mt-1 block">{criticalCounts}</span>
           </div>
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-[11px] text-slate-400 uppercase font-semibold">Queue Order</span>
-            <div className="text-xs font-semibold text-slate-300 mt-2 flex items-center gap-1">
-              <ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" /> Severity First
-            </div>
+          <div className="bg-field-surface-subtle p-3 rounded border border-field-border">
+            <span className="text-field-muted block">Sorting Order</span>
+            <span className="text-xs font-medium text-field-primary mt-2 block">Severity First (Auto-ranked)</span>
           </div>
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-[11px] text-emerald-400 uppercase font-semibold">Privacy Mode</span>
-            <div className="text-xs font-semibold text-emerald-300 mt-2 flex items-center gap-1.5">
-              <UserCheck className="w-3.5 h-3.5" /> De-identified IDs
-            </div>
+          <div className="bg-field-surface-subtle p-3 rounded border border-field-border">
+            <span className="text-readiness-green block">Identity Security</span>
+            <span className="text-xs font-medium text-field-primary mt-2 block">Pseudonymous IDs Active</span>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Toolbar */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Status Filters */}
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 mr-1">
-            <Filter className="w-3.5 h-3.5" /> Status:
-          </span>
+      {/* Filter and Search Bar */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+        {/* Status Filter Buttons */}
+        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
+          <span className="text-xs text-field-muted font-medium mr-1">Status:</span>
           {(['open', 'acknowledged', 'resolved', 'all'] as const).map((st) => (
             <button
               key={st}
               onClick={() => handleStatusChange(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition ${
+              className={`px-3 py-1.5 rounded text-xs font-medium capitalize transition-colors ${
                 statusFilter === st
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'bg-slate-800/70 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-command-blue text-white font-semibold'
+                  : 'bg-field-surface-subtle text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
               }`}
             >
-              {st === 'all' ? 'All Statuses' : st}
+              {st === 'all' ? 'All' : st}
             </button>
           ))}
         </div>
 
-        {/* Severity Filter & Search Input */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="text-xs text-slate-400 font-semibold">Severity:</span>
+        {/* Severity & Search Controls */}
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <span className="text-xs text-field-muted font-medium">Severity:</span>
             <select
               value={severityFilter}
               onChange={(e) => handleSeverityChange(e.target.value)}
-              className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="bg-field-surface-subtle border border-field-border text-field-primary text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-command-blue"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>
@@ -262,46 +257,44 @@ export const AlertsQueue: React.FC = () => {
             </select>
           </div>
 
-          <div className="relative w-full sm:w-56">
-            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
+          <div className="relative w-full sm:w-60">
+            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-field-muted" />
             <input
               type="text"
-              placeholder="Search ID or factor..."
+              placeholder="Search by ID or factor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-field-surface-subtle border border-field-border rounded pl-8 pr-3 py-1.5 text-xs text-field-primary placeholder-field-muted/60 focus:outline-none focus:border-command-blue"
             />
           </div>
         </div>
       </div>
 
-      {/* Error State */}
+      {/* Error Message */}
       {errorMessage && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-400 text-sm">
-          <AlertTriangle className="w-5 h-5 shrink-0" />
+        <div className="p-3.5 bg-triage-red-bg border border-triage-red-border rounded flex items-center gap-2 text-triage-red text-xs">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Alerts Table / List View */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+      {/* Alerts Table / Manifest */}
+      <div className="bg-field-surface border border-field-border rounded-lg overflow-hidden">
         {loading ? (
-          <div className="p-16 flex flex-col items-center justify-center text-slate-500">
-            <div className="w-9 h-9 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-3" />
-            <p className="text-xs font-medium text-slate-400">Loading prioritized alert queue...</p>
+          <div className="p-16 flex flex-col items-center justify-center text-field-muted">
+            <div className="w-6 h-6 border-2 border-field-border border-t-command-blue rounded-full animate-spin mb-2" />
+            <p className="text-xs">Loading triage manifest...</p>
           </div>
         ) : filteredAlerts.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-3">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white">No Alerts Found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
-              There are currently no alerts matching the selected status ({statusFilter}) and severity ({severityFilter}) filters.
+          <div className="p-12 text-center">
+            <CheckCircle2 className="w-8 h-8 text-readiness-green mx-auto mb-2" />
+            <h3 className="text-xs font-semibold text-field-primary">No Matching Alerts in Queue</h3>
+            <p className="text-xs text-field-muted max-w-sm mx-auto mt-1">
+              There are currently no active cases matching the selected status ({statusFilter}) and severity ({severityFilter}) filters.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-800/80">
+          <div className="divide-y divide-field-border">
             {filteredAlerts.map((alert) => (
               <div
                 key={alert.id}
@@ -310,68 +303,68 @@ export const AlertsQueue: React.FC = () => {
                     navigate(`/welfare/cases/${alert.pseudonymous_id}?alert_id=${alert.id}`);
                   }
                 }}
-                className="p-5 hover:bg-slate-800/50 cursor-pointer transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                className="p-4 hover:bg-field-surface-elevated cursor-pointer transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
-                <div className="flex items-start gap-4">
-                  {/* Score Indicator Ring */}
-                  <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 border ${
+                <div className="flex items-start gap-3.5">
+                  {/* Score Indicator Box */}
+                  <div className={`w-11 h-11 rounded flex flex-col items-center justify-center shrink-0 border ${
                     alert.severity === 'critical'
-                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                      ? 'bg-triage-red-bg border-triage-red-border text-triage-red'
                       : alert.severity === 'high'
-                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                      : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                      ? 'bg-triage-amber-bg border-triage-amber-border text-triage-amber'
+                      : 'bg-triage-blue-bg border-triage-blue-border text-blue-300'
                   }`}>
-                    <span className="text-xs font-black leading-none">
+                    <span className="text-xs font-bold leading-none">
                       {alert.calibrated_score ?? '--'}
                     </span>
-                    <span className="text-[9px] uppercase tracking-wider font-semibold opacity-80 mt-0.5">
+                    <span className="text-[9px] font-medium opacity-80 mt-0.5">
                       Risk
                     </span>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       {getSeverityBadge(alert.severity)}
                       {getStatusBadge(alert.status)}
-                      <span className="font-mono text-xs font-bold text-slate-200">
-                        Pseudonym: {alert.pseudonymous_id?.slice(0, 13)}...
+                      <span className="text-xs font-semibold text-field-primary">
+                        Pseudonym: {alert.pseudonymous_id?.slice(0, 12)}...
                       </span>
                     </div>
 
-                    {/* Contributing Factors preview */}
+                    {/* Contributing Factors */}
                     {alert.contributing_factors && alert.contributing_factors.length > 0 ? (
                       <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         {alert.contributing_factors.slice(0, 2).map((factor, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 bg-slate-950 border border-slate-800 rounded-md text-[11px] text-slate-300 font-medium"
+                            className="px-2 py-0.5 bg-field-surface-subtle border border-field-border rounded text-[11px] text-field-primary font-normal"
                           >
                             {factor}
                           </span>
                         ))}
                         {alert.contributing_factors.length > 2 && (
-                          <span className="text-[11px] text-slate-500">
-                            +{alert.contributing_factors.length - 2} more factors
+                          <span className="text-[11px] text-field-muted">
+                            +{alert.contributing_factors.length - 2} more
                           </span>
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500 italic">No specific contributing factors logged.</p>
+                      <p className="text-xs text-field-muted italic">Routine triage alert.</p>
                     )}
                   </div>
                 </div>
 
-                {/* Right Metadata and Action Button */}
-                <div className="flex items-center justify-between md:justify-end gap-6 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
-                  <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                {/* Right Meta & Action */}
+                <div className="flex items-center justify-between md:justify-end gap-5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-field-border">
+                  <div className="flex items-center gap-1.5 text-field-muted text-xs">
+                    <Clock className="w-3.5 h-3.5 text-field-muted" />
                     <span>{new Date(alert.created_at).toLocaleDateString()} {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold group-hover:text-indigo-300 transition-colors">
-                    <span>View Case Detail</span>
-                    <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                  </div>
+                  <span className="px-2.5 py-1 bg-field-surface-elevated hover:bg-field-border border border-field-border rounded text-xs font-medium text-field-primary transition-colors flex items-center gap-1">
+                    <FileSearch className="w-3.5 h-3.5 text-command-blue" />
+                    <span>Review Case</span>
+                  </span>
                 </div>
               </div>
             ))}
