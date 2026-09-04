@@ -7,9 +7,14 @@ import {
   Calendar, 
   FileEdit,
   Lock,
-  Layers
+  Layers,
+  Send,
+  Clock,
+  MapPin,
+  UserPlus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { RequestForChangeModal } from '../components/RequestForChangeModal';
 import {
   ResponsiveContainer,
   LineChart,
@@ -41,11 +46,31 @@ interface RiskOverview {
   rule_flags?: Record<string, any>;
 }
 
+interface ChangeRequestItem {
+  request_id: string;
+  person_id: string;
+  request_type: string;
+  request_details: Record<string, any>;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  risk_score_at_submission: number;
+  stress_score_at_submission: number;
+  contributing_factors_at_submission?: any[];
+  system_recommendation: string;
+  recommendation_reason?: string;
+  officer_decision?: string;
+  officer_reason?: string;
+  submitted_at: string;
+  decided_at?: string;
+}
+
 export const PersonnelDashboard: React.FC = () => {
   const { user } = useAuth();
   
   const [history, setHistory] = useState<WellnessAssessmentRecord[]>([]);
   const [riskData, setRiskData] = useState<RiskOverview | null>(null);
+  const [myRequests, setMyRequests] = useState<ChangeRequestItem[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
@@ -74,6 +99,15 @@ export const PersonnelDashboard: React.FC = () => {
       if (riskRes.ok) {
         const riskJson: RiskOverview = await riskRes.json();
         setRiskData(riskJson);
+      }
+
+      // 3. Fetch employee's change requests
+      const reqRes = await fetch('http://localhost:8000/requests/my', {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (reqRes.ok) {
+        const reqJson: ChangeRequestItem[] = await reqRes.json();
+        setMyRequests(reqJson);
       }
     } catch (err: any) {
       console.error('Error fetching personnel data:', err);
@@ -363,6 +397,215 @@ export const PersonnelDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* REQUEST FOR CHANGE PROMINENT SECTION */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-field-border">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-command-blue/20 text-command-blue border border-command-blue/40">
+                Operational Accommodations
+              </span>
+              <span className="text-xs text-field-muted">Decision-Support Assisted</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-field-primary">
+              Request for Change
+            </h2>
+            <p className="text-xs text-field-muted mt-0.5 max-w-2xl">
+              Submit formal operational requests for leave, workload augmentation, unit transfers, or shift schedule rotations. Your request is matched with your current readiness trajectory for transparent officer review.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2.5 bg-command-blue hover:bg-blue-600 text-white rounded text-xs font-semibold transition-colors flex items-center gap-2 shrink-0 shadow-sm"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Submit New Request</span>
+          </button>
+        </div>
+
+        {/* Quick-Launch Tiles */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
+          >
+            <Calendar className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">Leave</span>
+            <span className="text-[10px] text-field-muted">5-day rest block</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
+          >
+            <UserPlus className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">+ Workers</span>
+            <span className="text-[10px] text-field-muted">Workload support</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
+          >
+            <UserPlus className="w-4 h-4 text-field-muted mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">- Workers</span>
+            <span className="text-[10px] text-field-muted">Pacing adjustment</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
+          >
+            <MapPin className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">Transfer</span>
+            <span className="text-[10px] text-field-muted">Unit relocation</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group col-span-2 sm:col-span-1"
+          >
+            <Clock className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">Shift Change</span>
+            <span className="text-[10px] text-field-muted">Day ↔ Night</span>
+          </button>
+        </div>
+      </div>
+
+      {/* MY REQUESTS HISTORY */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-field-border">
+          <div>
+            <h2 className="text-base font-bold text-field-primary flex items-center gap-2">
+              <Clock className="w-4 h-4 text-field-muted" />
+              <span>My Requests</span>
+            </h2>
+            <p className="text-xs text-field-muted mt-0.5">
+              Live status, submission snapshots, and Welfare Officer decisions.
+            </p>
+          </div>
+          <span className="text-xs font-mono text-field-muted">
+            Total: {myRequests.length}
+          </span>
+        </div>
+
+        {myRequests.length === 0 ? (
+          <div className="p-8 text-center bg-field-surface-subtle border border-field-border rounded text-xs text-field-muted space-y-2">
+            <p>You have not submitted any change requests yet.</p>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="text-xs text-command-blue hover:underline font-semibold"
+            >
+              Click here to submit your first request
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-field-border text-field-muted font-semibold">
+                  <th className="pb-3 pr-4">Request Type</th>
+                  <th className="pb-3 pr-4">Details / Reason</th>
+                  <th className="pb-3 pr-4 text-center">Welfare Risk (at Sub.)</th>
+                  <th className="pb-3 pr-4 text-center">Status</th>
+                  <th className="pb-3 pr-4">Officer Decision & Reason</th>
+                  <th className="pb-3 text-right">Submitted Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-field-border">
+                {myRequests.map((req) => {
+                  let statusBadge = (
+                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-amber-bg text-triage-amber border border-triage-amber-border">
+                      PENDING
+                    </span>
+                  );
+                  if (req.status === 'APPROVED') {
+                    statusBadge = (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-green-bg text-readiness-green border border-triage-green-border">
+                        APPROVED
+                      </span>
+                    );
+                  } else if (req.status === 'REJECTED') {
+                    statusBadge = (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-red-bg text-triage-red border border-triage-red-border">
+                        REJECTED
+                      </span>
+                    );
+                  }
+
+                  const formatDetails = () => {
+                    if (req.request_type === 'leave') {
+                      return `${req.request_details?.leave_days ?? 5} Days (${req.request_details?.leave_type ?? 'Casual'})`;
+                    }
+                    if (req.request_type === 'increase_workers') {
+                      return `+${req.request_details?.additional_workers_requested ?? 1} Workers`;
+                    }
+                    if (req.request_type === 'decrease_workers') {
+                      return `-${req.request_details?.workers_to_decrease ?? 1} Workers`;
+                    }
+                    if (req.request_type === 'transfer') {
+                      return `To: ${req.request_details?.preferred_transfer_unit_location ?? 'N/A'}`;
+                    }
+                    if (req.request_type === 'shift_change') {
+                      return `Shift: ${req.request_details?.requested_shift ?? 'Schedule'}`;
+                    }
+                    return JSON.stringify(req.request_details);
+                  };
+
+                  return (
+                    <tr key={req.request_id} className="hover:bg-field-surface-elevated transition-colors">
+                      <td className="py-3 pr-4 font-semibold text-field-primary capitalize">
+                        {req.request_type.replace('_', ' ')}
+                      </td>
+                      <td className="py-3 pr-4 max-w-xs">
+                        <div className="font-medium text-field-primary text-[11px]">{formatDetails()}</div>
+                        <div className="text-field-muted text-[11px] truncate mt-0.5">{req.reason}</div>
+                      </td>
+                      <td className="py-3 pr-4 text-center">
+                        <span className="font-bold text-field-primary">
+                          {req.risk_score_at_submission}
+                          <span className="text-[10px] text-field-muted font-normal"> / 100</span>
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4 text-center">
+                        {statusBadge}
+                      </td>
+                      <td className="py-3 pr-4 max-w-xs">
+                        {req.status === 'PENDING' ? (
+                          <span className="text-field-muted italic text-[11px]">Under officer review</span>
+                        ) : req.status === 'APPROVED' ? (
+                          <div className="text-readiness-green font-medium text-[11px]">
+                            Approved {req.officer_reason ? `— "${req.officer_reason}"` : ''}
+                          </div>
+                        ) : (
+                          <div className="text-triage-red font-medium text-[11px]">
+                            Rejected {req.officer_reason ? `— "${req.officer_reason}"` : ''}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 text-right text-field-muted font-mono text-[11px]">
+                        {new Date(req.submitted_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Popup */}
+      <RequestForChangeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmitted={fetchData}
+      />
 
       {/* Identity Security Stamp */}
       <div className="bg-field-surface-subtle border border-field-border rounded p-3.5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-field-muted">

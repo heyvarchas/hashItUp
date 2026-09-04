@@ -8,7 +8,11 @@ import {
   AlertCircle,
   Search,
   Users,
-  ArrowRight
+  ArrowRight,
+  ClipboardList,
+  CheckCircle,
+  XCircle,
+  Sparkles
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -55,6 +59,29 @@ interface PersonnelRow {
   help_requested: boolean;
 }
 
+interface PendingChangeRequest {
+  request_id: string;
+  person_id: string;
+  request_type: string;
+  request_details: Record<string, any>;
+  reason: string;
+  status: string;
+  risk_score_at_submission: number;
+  stress_score_at_submission: number;
+  contributing_factors_at_submission?: Array<{
+    raw_feature?: string;
+    display_name: string;
+    points_impact: number;
+    impact_direction?: string;
+    actual_value?: any;
+  }>;
+  system_recommendation: string;
+  recommendation_reason?: string;
+  officer_decision?: string;
+  officer_reason?: string;
+  submitted_at: string;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   critical: '#D6453D',
   high: '#C97A1E',
@@ -89,6 +116,11 @@ export const WelfareDashboard: React.FC = () => {
 
   const [summaryData, setSummaryData] = useState<UnitSummaryData | null>(null);
   const [personnelList, setPersonnelList] = useState<PersonnelRow[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingChangeRequest[]>([]);
+  const [decidingId, setDecidingId] = useState<string | null>(null);
+  const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
+  const [showRejectInput, setShowRejectInput] = useState<Record<string, boolean>>({});
+  const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -125,11 +157,53 @@ export const WelfareDashboard: React.FC = () => {
         const pList: PersonnelRow[] = await resPersonnel.json();
         setPersonnelList(pList);
       }
+
+      // 3. Fetch pending change requests for welfare officer
+      const resReqs = await fetch('http://localhost:8000/requests/pending', {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (resReqs.ok) {
+        const reqsData: PendingChangeRequest[] = await resReqs.json();
+        setPendingRequests(reqsData);
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred while loading unit summary statistics.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const handleDecision = async (requestId: string, decision: 'APPROVED' | 'REJECTED') => {
+    setDecidingId(requestId);
+    setActionSuccessMsg(null);
+    try {
+      const reason = rejectionReasons[requestId] || undefined;
+      const res = await fetch(`http://localhost:8000/requests/${requestId}/decision`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          decision,
+          reason,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Failed to submit decision.');
+      }
+
+      setActionSuccessMsg(`Request successfully ${decision === 'APPROVED' ? 'approved' : 'rejected'}. Employee notified.`);
+      // Remove from pending immediately
+      setPendingRequests((prev) => prev.filter((r) => r.request_id !== requestId));
+      setTimeout(() => setActionSuccessMsg(null), 4000);
+    } catch (err: any) {
+      alert(`Decision error: ${err.message}`);
+    } finally {
+      setDecidingId(null);
     }
   };
 
@@ -245,6 +319,249 @@ export const WelfareDashboard: React.FC = () => {
           <span>{errorMessage}</span>
         </div>
       )}
+
+      {/* Action Success Notification */}
+      {actionSuccessMsg && (
+        <div className="p-3.5 bg-triage-green-bg border border-triage-green-border rounded flex items-center gap-2 text-readiness-green text-xs font-semibold">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          <span>{actionSuccessMsg}</span>
+        </div>
+      )}
+
+      {/* CHANGE REQUESTS TRIAGE SECTION */}
+      <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-field-border">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-command-blue/20 text-command-blue border border-command-blue/40">
+                Decision Support
+              </span>
+              <span className="text-xs text-field-muted">Welfare Officer Authority Required</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-field-primary flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-command-blue" />
+              <span>Pending Change Requests ({pendingRequests.length})</span>
+            </h2>
+            <p className="text-xs text-field-muted mt-0.5">
+              Review employee requests for leave, workload augmentation, unit transfers, or shift changes with ML risk context and TreeSHAP attribution.
+            </p>
+          </div>
+          <span className="text-xs font-mono text-field-muted hidden sm:inline">
+            Awaiting Review: {pendingRequests.length}
+          </span>
+        </div>
+
+        {pendingRequests.length === 0 ? (
+          <div className="p-6 text-center bg-field-surface-subtle border border-field-border rounded text-xs text-field-muted">
+            ✓ No pending change requests. All employee accommodation requests have been processed.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pendingRequests.map((req) => {
+              const reqLabel = req.request_type.replace('_', ' ').toUpperCase();
+              const isRejecting = showRejectInput[req.request_id];
+              const formatDetails = () => {
+                if (req.request_type === 'leave') {
+                  return `${req.request_details?.leave_days ?? 5} Days (${req.request_details?.leave_type ?? 'Casual Leave'})`;
+                }
+                if (req.request_type === 'increase_workers') {
+                  return `+${req.request_details?.additional_workers_requested ?? 1} Workers Requested`;
+                }
+                if (req.request_type === 'decrease_workers') {
+                  return `-${req.request_details?.workers_to_decrease ?? 1} Workers`;
+                }
+                if (req.request_type === 'transfer') {
+                  return `Preferred Unit: ${req.request_details?.preferred_transfer_unit_location ?? 'Headquarters'}`;
+                }
+                if (req.request_type === 'shift_change') {
+                  return `Requested: ${req.request_details?.requested_shift ?? 'Schedule Change'}`;
+                }
+                return JSON.stringify(req.request_details);
+              };
+
+              // Determine recommendation styling
+              const isRecApprove = req.system_recommendation.includes('APPROVE');
+              const isRecReject = req.system_recommendation.includes('REJECT');
+
+              return (
+                <div
+                  key={req.request_id}
+                  className="p-5 bg-field-surface-subtle border border-field-border rounded-lg space-y-4 hover:border-field-primary/30 transition-colors"
+                >
+                  {/* Card Header: Employee & Request summary */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-field-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded bg-field-border flex items-center justify-center font-mono font-bold text-xs text-command-blue">
+                        {req.person_id.slice(-4)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-field-primary font-mono">
+                            Employee: {req.person_id}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-command-blue/15 text-command-blue font-semibold border border-command-blue/30">
+                            {reqLabel}
+                          </span>
+                        </div>
+                        <div className="text-xs text-field-primary font-semibold mt-0.5">
+                          Request: <span className="text-field-muted font-normal">{formatDetails()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="text-right">
+                        <span className="text-field-muted block text-[11px]">Current Welfare Risk</span>
+                        <span className="font-bold text-sm text-field-primary">
+                          {req.risk_score_at_submission} / 100
+                          <span className={`ml-1.5 text-[10px] uppercase font-bold ${
+                            req.risk_score_at_submission >= 65 ? 'text-triage-red' : 'text-triage-amber'
+                          }`}>
+                            {req.risk_score_at_submission >= 65 ? '— HIGH' : '— MODERATE'}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="text-right border-l border-field-border pl-4">
+                        <span className="text-field-muted block text-[11px]">Current Stress</span>
+                        <span className="font-bold text-sm text-triage-amber">
+                          {req.stress_score_at_submission} / 10
+                          <span className="ml-1 text-[10px] font-semibold text-field-muted">
+                            {req.stress_score_at_submission >= 6 ? '— HIGH' : ''}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reason & SHAP Contributing Factors */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
+                    <div className="md:col-span-6 space-y-2">
+                      <span className="text-field-muted font-semibold block">Employee Stated Reason:</span>
+                      <p className="p-3 bg-field-surface border border-field-border rounded text-field-primary leading-relaxed">
+                        "{req.reason}"
+                      </p>
+                      {req.request_details?.additional_note && (
+                        <p className="text-[11px] text-field-muted italic">
+                          Additional note: {req.request_details.additional_note}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="md:col-span-6 space-y-2">
+                      <span className="text-field-muted font-semibold block">Top Contributing Factors (Submission Snapshot):</span>
+                      <div className="space-y-1.5 bg-field-surface border border-field-border p-3 rounded">
+                        {req.contributing_factors_at_submission && req.contributing_factors_at_submission.length > 0 ? (
+                          req.contributing_factors_at_submission.slice(0, 5).map((f, i) => (
+                            <div key={i} className="flex items-center justify-between text-[11px]">
+                              <span className="text-field-primary">{i + 1}. {f.display_name}</span>
+                              <span className={`font-mono font-semibold ${f.points_impact >= 0 ? 'text-triage-red' : 'text-readiness-green'}`}>
+                                {f.points_impact >= 0 ? `+${f.points_impact}` : f.points_impact} pts
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-field-muted text-[11px]">No acute fatigue factors flagged.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* System Decision-Support Recommendation */}
+                  <div className={`p-4 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isRecApprove
+                      ? 'bg-triage-green-bg/60 border-triage-green-border'
+                      : isRecReject
+                      ? 'bg-triage-red-bg/60 border-triage-red-border'
+                      : 'bg-triage-amber-bg/60 border-triage-amber-border'
+                  }`}>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className={`w-4 h-4 ${
+                          isRecApprove ? 'text-readiness-green' : isRecReject ? 'text-triage-red' : 'text-triage-amber'
+                        }`} />
+                        <span className="text-xs font-bold uppercase tracking-wide text-field-primary">
+                          System Recommendation:
+                        </span>
+                        <span className={`text-xs font-extrabold px-2 py-0.5 rounded ${
+                          isRecApprove
+                            ? 'bg-readiness-green/20 text-readiness-green'
+                            : isRecReject
+                            ? 'bg-triage-red/20 text-triage-red'
+                            : 'bg-triage-amber/20 text-triage-amber'
+                        }`}>
+                          {req.system_recommendation}
+                        </span>
+                      </div>
+                      <p className="text-xs text-field-primary leading-relaxed">
+                        Reason: {req.recommendation_reason}
+                      </p>
+                    </div>
+
+                    {/* Officer Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={decidingId === req.request_id}
+                        onClick={() => handleDecision(req.request_id, 'APPROVED')}
+                        className="px-4 py-2 bg-readiness-green hover:bg-emerald-600 text-white rounded text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>Approve</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={decidingId === req.request_id}
+                        onClick={() => {
+                          setShowRejectInput((prev) => ({
+                            ...prev,
+                            [req.request_id]: !prev[req.request_id],
+                          }));
+                        }}
+                        className="px-3.5 py-2 bg-field-surface hover:bg-triage-red-bg text-triage-red border border-triage-red-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Reject...</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Optional Rejection Reason Expandable Panel */}
+                  {isRejecting && (
+                    <div className="p-3.5 bg-field-surface border border-triage-red-border/60 rounded-lg space-y-2">
+                      <label className="text-xs font-semibold text-field-muted block">
+                        Optional Rejection Reason / Note to Employee:
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g., Current staffing requirements do not permit the requested transfer at this time."
+                          value={rejectionReasons[req.request_id] || ''}
+                          onChange={(e) =>
+                            setRejectionReasons((prev) => ({
+                              ...prev,
+                              [req.request_id]: e.target.value,
+                            }))
+                          }
+                          className="flex-1 bg-field-surface-subtle border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-triage-red"
+                        />
+                        <button
+                          type="button"
+                          disabled={decidingId === req.request_id}
+                          onClick={() => handleDecision(req.request_id, 'REJECTED')}
+                          className="px-4 py-1.5 bg-triage-red hover:bg-red-700 text-white rounded text-xs font-bold transition-colors shrink-0 disabled:opacity-50"
+                        >
+                          Confirm Rejection
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <div className="p-16 bg-field-surface border border-field-border rounded-lg flex flex-col items-center justify-center text-field-muted">
