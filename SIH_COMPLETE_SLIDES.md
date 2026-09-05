@@ -16,7 +16,7 @@
 ## 📄 SLIDE 2: PROPOSED SOLUTION
 
 ### **IDEA TITLE**
-**AI-Powered Stress & Fatigue Early Warning System for Armed Forces**
+**AI-Powered Stress & Fatigue Monitering System for Armed Forces**
 
 ### ❖ **Proposed Solution (Describe your Idea/Solution/Prototype)**
 

@@ -73,10 +73,10 @@ export const Login: React.FC = () => {
             </div>
             <div>
               <h1 className="text-base font-bold text-field-primary leading-tight">
-                CAPF Welfare Command
+                STHIRA
               </h1>
               <p className="text-xs text-field-muted">
-                Stress & Fatigue Early-Warning System
+                Stress & Fatigue Monitering System
               </p>
             </div>
           </div>
