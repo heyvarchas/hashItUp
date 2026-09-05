@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
+import {
   ArrowLeft,
   Lock,
   Send,
@@ -217,11 +217,10 @@ export const WellnessCheckin: React.FC = () => {
                       key={opt.val}
                       type="button"
                       onClick={() => setMood(opt.val)}
-                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
-                        isSelected
+                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${isSelected
                           ? 'bg-command-blue text-white border-blue-400 font-semibold'
                           : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                      }`}
+                        }`}
                     >
                       <span className="text-sm font-bold">{opt.val}</span>
                       <span className="text-[10px] leading-tight line-clamp-1">{opt.label.split('/')[0]}</span>
@@ -252,11 +251,10 @@ export const WellnessCheckin: React.FC = () => {
                       key={opt.val}
                       type="button"
                       onClick={() => setSleep(opt.val)}
-                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
-                        isSelected
+                      className={`p-2.5 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${isSelected
                           ? 'bg-command-blue text-white border-blue-400 font-semibold'
                           : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                      }`}
+                        }`}
                     >
                       <span className="text-sm font-bold">{opt.val}</span>
                       <span className="text-[10px] leading-tight line-clamp-1">{opt.label.split('/')[0]}</span>
@@ -292,15 +290,14 @@ export const WellnessCheckin: React.FC = () => {
                       key={num}
                       type="button"
                       onClick={() => setStress(num)}
-                      className={`py-2 rounded border text-center text-xs font-bold transition-colors ${
-                        isSelected
+                      className={`py-2 rounded border text-center text-xs font-bold transition-colors ${isSelected
                           ? num >= 8
                             ? 'bg-triage-red text-white border-red-500'
                             : num >= 6
-                            ? 'bg-triage-amber text-white border-amber-500'
-                            : 'bg-command-blue text-white border-blue-400'
+                              ? 'bg-triage-amber text-white border-amber-500'
+                              : 'bg-command-blue text-white border-blue-400'
                           : 'bg-field-surface-subtle border-field-border text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                      }`}
+                        }`}
                     >
                       {num}
                     </button>
@@ -345,11 +342,10 @@ export const WellnessCheckin: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setHelpRequested(!helpRequested)}
-                className={`shrink-0 px-3.5 py-1.5 rounded text-xs font-semibold transition-colors border ${
-                  helpRequested
+                className={`shrink-0 px-3.5 py-1.5 rounded text-xs font-semibold transition-colors border ${helpRequested
                     ? 'bg-triage-amber text-white border-amber-500'
                     : 'bg-field-surface-elevated hover:bg-field-border text-field-primary border-field-border'
-                }`}
+                  }`}
               >
                 {helpRequested ? '✓ Outreach Requested' : "I'd like to talk to someone"}
               </button>

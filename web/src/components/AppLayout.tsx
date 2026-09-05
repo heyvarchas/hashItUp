@@ -36,7 +36,7 @@ export const AppLayout: React.FC = () => {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-sm text-field-primary tracking-normal">
-                  CAPF Welfare Command
+                  STHIRA
                 </span>
                 <span className="text-xs text-field-muted font-normal">
                   / {getRoleLabel(role)}
@@ -56,10 +56,9 @@ export const AppLayout: React.FC = () => {
                   to="/personnel"
                   end
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
@@ -69,10 +68,9 @@ export const AppLayout: React.FC = () => {
                 <NavLink
                   to="/personnel/checkin"
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
@@ -88,10 +86,9 @@ export const AppLayout: React.FC = () => {
                   to="/welfare"
                   end
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
@@ -101,10 +98,9 @@ export const AppLayout: React.FC = () => {
                 <NavLink
                   to="/welfare/alerts"
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
@@ -118,10 +114,9 @@ export const AppLayout: React.FC = () => {
               <NavLink
                 to="/commander"
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-command-blue text-white font-semibold'
-                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                  `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                    ? 'bg-command-blue text-white font-semibold'
+                    : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                   }`
                 }
               >
@@ -136,10 +131,9 @@ export const AppLayout: React.FC = () => {
                   to="/welfare"
                   end
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
@@ -149,10 +143,9 @@ export const AppLayout: React.FC = () => {
                 <NavLink
                   to="/admin"
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                      ? 'bg-command-blue text-white font-semibold'
+                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
                     }`
                   }
                 >
