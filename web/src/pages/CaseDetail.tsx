@@ -383,7 +383,7 @@ export const CaseDetail: React.FC = () => {
 
           {/* High-Precision Risk Score Gauge */}
           {riskDetail && (
-            <div className="flex items-center gap-4 bg-field-surface-subtle border border-field-border rounded p-3.5 shrink-0">
+            <div className="flex items-center gap-4 bg-field-surface-subtle border border-field-border rounded p-3.5 shrink-0 self-start sm:self-auto w-full sm:w-auto">
               <div className="relative flex items-center justify-center w-20 h-20">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle

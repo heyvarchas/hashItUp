@@ -379,18 +379,18 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
           </div>
 
           {/* Modal Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-field-border">
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-end gap-2.5 border-t border-field-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 rounded bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border text-xs font-medium transition-colors"
+              className="w-full sm:w-auto px-3.5 py-2 rounded bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border text-xs font-medium transition-colors text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded bg-command-blue hover:bg-blue-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2 rounded bg-command-blue hover:bg-blue-600 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Routing Request...' : 'Submit Request'}</span>

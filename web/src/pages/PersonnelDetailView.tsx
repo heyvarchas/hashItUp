@@ -287,7 +287,7 @@ export const PersonnelDetailView: React.FC = () => {
               </div>
 
               {/* Prominent Welfare Risk Score Gauge */}
-              <div className="flex items-center gap-5 bg-field-surface-subtle border border-field-border rounded-lg p-4 sm:p-5 shrink-0">
+              <div className="flex items-center gap-5 bg-field-surface-subtle border border-field-border rounded-lg p-4 sm:p-5 shrink-0 self-start sm:self-auto w-full sm:w-auto">
                 <div className="relative flex items-center justify-center w-24 h-24">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r={radius} stroke="#222D37" strokeWidth="8" fill="transparent" />

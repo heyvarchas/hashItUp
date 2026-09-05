@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Shield, FileText, BarChart2, AlertCircle } from 'lucide-react';
+import { LogOut, Shield, FileText, BarChart2, AlertCircle, Menu, X } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const role = user?.claims.role;
 
   const getRoleLabel = (r?: string) => {
@@ -49,8 +50,8 @@ export const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation Bar */}
-          <nav className="flex items-center gap-1">
+          {/* Desktop Navigation Bar */}
+          <nav className="hidden md:flex items-center gap-1">
             {role === 'personnel' && (
               <>
                 <NavLink
@@ -157,29 +158,189 @@ export const AppLayout: React.FC = () => {
             )}
           </nav>
 
-          {/* Session Info & Sign Out */}
-          <div className="flex items-center gap-2.5">
+          {/* Session Info & Controls */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Dark / Light Theme Toggle */}
             <ThemeToggle />
 
             {/* In-App Notification Bell */}
             <NotificationBell />
 
-            <div className="text-right hidden md:block text-xs">
+            <div className="text-right hidden lg:block text-xs">
               <span className="text-readiness-green font-medium flex items-center gap-1 justify-end">
                 <span className="w-1.5 h-1.5 rounded-full bg-readiness-green" />
                 Live Session
               </span>
             </div>
+
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors"
+              title="Sign Out"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors"
             >
               <LogOut className="w-3.5 h-3.5 text-field-muted" />
               <span>Sign Out</span>
             </button>
+
+            {/* Mobile Menu Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-1.5 rounded bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border transition-colors flex items-center justify-center"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-4 h-4 text-field-primary" />
+              ) : (
+                <Menu className="w-4 h-4 text-field-primary" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-field-border bg-field-surface px-4 py-3 space-y-2 shadow-lg animate-in slide-in-from-top-2 duration-150">
+            <div className="text-[11px] text-field-muted font-mono uppercase tracking-wider pb-1">
+              Navigation • {getRoleLabel(role)}
+            </div>
+
+            {role === 'personnel' && (
+              <div className="flex flex-col gap-1">
+                <NavLink
+                  to="/personnel"
+                  end
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Personal Readiness</span>
+                </NavLink>
+                <NavLink
+                  to="/personnel/checkin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Daily Check-in</span>
+                </NavLink>
+              </div>
+            )}
+
+            {role === 'welfare_officer' && (
+              <div className="flex flex-col gap-1">
+                <NavLink
+                  to="/welfare"
+                  end
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Unit Overview</span>
+                </NavLink>
+                <NavLink
+                  to="/welfare/alerts"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Triage Queue</span>
+                </NavLink>
+              </div>
+            )}
+
+            {role === 'commander' && (
+              <div className="flex flex-col gap-1">
+                <NavLink
+                  to="/commander"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Command Overview</span>
+                </NavLink>
+              </div>
+            )}
+
+            {role === 'admin' && (
+              <div className="flex flex-col gap-1">
+                <NavLink
+                  to="/welfare"
+                  end
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Personnel Roster</span>
+                </NavLink>
+                <NavLink
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-command-blue text-white font-semibold'
+                        : 'text-field-primary hover:bg-field-surface-elevated'
+                    }`
+                  }
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Dataset Management</span>
+                </NavLink>
+              </div>
+            )}
+
+            {/* Mobile Sign Out Button */}
+            <div className="pt-2 mt-2 border-t border-field-border flex items-center justify-between">
+              <span className="text-[11px] text-field-muted font-mono truncate">
+                ID: {user?.claims.pseudonymous_id}
+              </span>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-field-surface-elevated hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-medium transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5 text-field-muted" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}

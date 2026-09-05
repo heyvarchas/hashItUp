@@ -189,7 +189,7 @@ export const PersonnelDashboard: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               to="/personnel/checkin"
               className="px-3.5 py-2 bg-command-blue hover:bg-blue-600 text-white rounded text-xs font-semibold transition-colors flex items-center gap-1.5"
@@ -507,7 +507,7 @@ export const PersonnelDashboard: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[650px]">
               <thead>
                 <tr className="border-b border-field-border text-field-muted font-semibold">
                   <th className="pb-3 pr-4">Request Type</th>
