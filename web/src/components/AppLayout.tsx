@@ -3,6 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Shield, FileText, BarChart2, AlertCircle } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
+import { ThemeToggle } from './ThemeToggle';
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -157,7 +158,10 @@ export const AppLayout: React.FC = () => {
           </nav>
 
           {/* Session Info & Sign Out */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Dark / Light Theme Toggle */}
+            <ThemeToggle />
+
             {/* In-App Notification Bell */}
             <NotificationBell />
 

@@ -59,33 +59,45 @@ def get_unit_summary(
         .all()
     )
 
-    total_personnel = len(latest_scores)
+    # Prefer live master dataset predictions when available
+    from app.master_data import master_manager
+    master_personnel = master_manager.get_all_personnel_latest() if hasattr(master_manager, 'get_all_personnel_latest') else []
 
-    # If DB is empty or during standalone demo, provide standard calibrated Unit A baseline (120 total)
-    if total_personnel == 0:
+    if master_personnel and len(master_personnel) > 0:
+        total_personnel = len(master_personnel)
+        low_count = sum(1 for p in master_personnel if str(p.get("risk_category", "")).upper() == "LOW")
+        moderate_count = sum(1 for p in master_personnel if str(p.get("risk_category", "")).upper() == "MODERATE")
+        high_count = sum(1 for p in master_personnel if str(p.get("risk_category", "")).upper() == "HIGH")
+        critical_count = sum(1 for p in master_personnel if str(p.get("risk_category", "")).upper() == "CRITICAL")
+        avg_score = round(
+            sum(float(p.get("welfare_risk_score", 0)) for p in master_personnel) / total_personnel,
+            1,
+        )
+    elif total_personnel == 0:
+        # Standard calibrated Unit A baseline (120 total)
         low_count = 72
         moderate_count = 31
         high_count = 14
         critical_count = 3
         total_personnel = 120
+        avg_score = 34.8
     else:
-        # 2. Count risk categories
-        low_count = sum(1 for s in latest_scores if s.risk_category == "low")
-        moderate_count = sum(1 for s in latest_scores if s.risk_category == "moderate")
-        high_count = sum(1 for s in latest_scores if s.risk_category == "high")
-        critical_count = sum(1 for s in latest_scores if s.risk_category == "critical")
+        # Fallback to RiskScore records in DB
+        low_count = sum(1 for s in latest_scores if str(s.risk_category).lower() == "low")
+        moderate_count = sum(1 for s in latest_scores if str(s.risk_category).lower() == "moderate")
+        high_count = sum(1 for s in latest_scores if str(s.risk_category).lower() == "high")
+        critical_count = sum(1 for s in latest_scores if str(s.risk_category).lower() == "critical")
+        avg_score = (
+            round(sum(float(s.calibrated_score) for s in latest_scores) / len(latest_scores), 1)
+            if len(latest_scores) > 0
+            else 34.8
+        )
 
-    # 3. Percentages & averages
+    # Calculate percentages
     low_pct = round((low_count / total_personnel) * 100, 1) if total_personnel > 0 else 0.0
     moderate_pct = round((moderate_count / total_personnel) * 100, 1) if total_personnel > 0 else 0.0
     high_pct = round((high_count / total_personnel) * 100, 1) if total_personnel > 0 else 0.0
     critical_pct = round((critical_count / total_personnel) * 100, 1) if total_personnel > 0 else 0.0
-
-    avg_score = (
-        round(sum(float(s.calibrated_score) for s in latest_scores) / len(latest_scores), 1)
-        if len(latest_scores) > 0
-        else 34.8
-    )
 
     distribution: List[RiskCategoryStat] = [
         RiskCategoryStat(

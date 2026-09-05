@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, Lock, User, AlertCircle, KeyRound } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export const Login: React.FC = () => {
   const [serviceNumber, setServiceNumber] = useState('');
@@ -67,18 +68,21 @@ export const Login: React.FC = () => {
       <div className="w-full max-w-md bg-field-surface border border-field-border rounded-lg p-6 sm:p-8">
         {/* Security & System Header */}
         <div className="border-b border-field-border pb-5 mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded bg-field-surface-elevated border border-field-border flex items-center justify-center text-field-primary">
-              <Shield className="w-5 h-5 text-field-primary" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded bg-field-surface-elevated border border-field-border flex items-center justify-center text-field-primary">
+                <Shield className="w-5 h-5 text-field-primary" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold text-field-primary leading-tight">
+                  STHIRA
+                </h1>
+                <p className="text-xs text-field-muted">
+                  Stress & Fatigue Monitoring System
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-base font-bold text-field-primary leading-tight">
-                STHIRA
-              </h1>
-              <p className="text-xs text-field-muted">
-                Stress & Fatigue Monitering System
-              </p>
-            </div>
+            <ThemeToggle />
           </div>
           <div className="flex items-center gap-2 mt-3 text-[11px] text-field-muted bg-field-surface-subtle p-2 rounded border border-field-border">
             <Lock className="w-3.5 h-3.5 text-readiness-green shrink-0" />

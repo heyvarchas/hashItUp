@@ -248,7 +248,7 @@ export const WelfareDashboard: React.FC = () => {
         );
       case 'MODERATE':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-blue-bg text-blue-300 border border-triage-blue-border">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-triage-blue-bg text-triage-blue border border-triage-blue-border">
             MODERATE
           </span>
         );
@@ -261,13 +261,61 @@ export const WelfareDashboard: React.FC = () => {
     }
   };
 
-  const elevatedPercent = summaryData
-    ? (
-        ((summaryData.high_count + summaryData.critical_count) /
-          (summaryData.total_personnel || 1)) *
-        100
-      ).toFixed(1)
-    : '0';
+  // Accurately derive population counts across Low, Moderate, High, and Critical tiers
+  const totalCount = personnelList.length > 0 ? personnelList.length : (summaryData?.total_personnel || 0);
+
+  const lowCount = personnelList.length > 0
+    ? personnelList.filter((p) => p.risk_category.toUpperCase() === 'LOW').length
+    : (summaryData?.low_count || 0);
+
+  const moderateCount = personnelList.length > 0
+    ? personnelList.filter((p) => p.risk_category.toUpperCase() === 'MODERATE').length
+    : (summaryData?.moderate_count || 0);
+
+  const highCount = personnelList.length > 0
+    ? personnelList.filter((p) => p.risk_category.toUpperCase() === 'HIGH').length
+    : (summaryData?.high_count || 0);
+
+  const criticalCount = personnelList.length > 0
+    ? personnelList.filter((p) => p.risk_category.toUpperCase() === 'CRITICAL').length
+    : (summaryData?.critical_count || 0);
+
+  const lowPercent = totalCount > 0 ? ((lowCount / totalCount) * 100).toFixed(1) : '0.0';
+  const moderatePercent = totalCount > 0 ? ((moderateCount / totalCount) * 100).toFixed(1) : '0.0';
+  const highPercent = totalCount > 0 ? ((highCount / totalCount) * 100).toFixed(1) : '0.0';
+  const criticalPercent = totalCount > 0 ? ((criticalCount / totalCount) * 100).toFixed(1) : '0.0';
+
+  // Minimalistic distribution list matching the exact 4 tiers
+  const activeDistribution: RiskCategoryStat[] = [
+    {
+      category: 'low',
+      label: 'Low Risk',
+      count: lowCount,
+      percentage: Number(lowPercent),
+      color: '#2E8B68',
+    },
+    {
+      category: 'moderate',
+      label: 'Moderate Risk',
+      count: moderateCount,
+      percentage: Number(moderatePercent),
+      color: '#2965A8',
+    },
+    {
+      category: 'high',
+      label: 'High Risk',
+      count: highCount,
+      percentage: Number(highPercent),
+      color: '#C97A1E',
+    },
+    {
+      category: 'critical',
+      label: 'Critical Urgency',
+      count: criticalCount,
+      percentage: Number(criticalPercent),
+      color: '#D6453D',
+    },
+  ];
 
   return (
     <div className="space-y-6 font-sans">
@@ -571,114 +619,187 @@ export const WelfareDashboard: React.FC = () => {
         </div>
       ) : summaryData ? (
         <div className="space-y-6">
-          {/* Key Metric Tiles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Personnel */}
-            <div className="bg-field-surface border border-field-border rounded-lg p-4">
-              <span className="text-xs font-semibold text-field-muted block">
-                Total Monitored Personnel
+          {/* Minimalistic Population Risk Breakdown Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Total Monitored */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4 transition-all hover:border-field-primary/20">
+              <span className="text-xs font-medium text-field-muted block">
+                Total Personnel
               </span>
-              <div className="mt-2 text-2xl font-bold text-field-primary">
-                {personnelList.length || summaryData.total_personnel}
+              <div className="mt-1.5 text-2xl sm:text-3xl font-bold text-field-primary tracking-tight">
+                {totalCount}
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">Active master dataset records</p>
+              <p className="text-[11px] text-field-muted mt-1">100% active monitored unit</p>
             </div>
 
-            {/* Average Calibrated Score */}
-            <div className="bg-field-surface border border-field-border rounded-lg p-4">
-              <span className="text-xs font-semibold text-field-muted block">
-                Mean Welfare Risk Score
-              </span>
-              <div className="mt-2 text-2xl font-bold text-field-primary flex items-baseline gap-1">
-                <span>{summaryData.average_calibrated_score}</span>
-                <span className="text-xs font-normal text-field-muted">/ 100</span>
-              </div>
-              <p className="text-[11px] text-field-muted mt-0.5">Calibrated ML population mean</p>
-            </div>
-
-            {/* Stable Baseline Percentage */}
-            <div className="bg-field-surface border border-field-border rounded-lg p-4">
-              <span className="text-xs font-semibold text-readiness-green block">
-                Low Risk Cohort
-              </span>
-              <div className="mt-2 text-2xl font-bold text-readiness-green flex items-baseline gap-1.5">
-                <span>
-                  {summaryData.total_personnel > 0
-                    ? ((summaryData.low_count / summaryData.total_personnel) * 100).toFixed(1)
-                    : '0'}
-                  %
+            {/* Low Risk Card */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4 transition-all hover:border-readiness-green/40">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-readiness-green flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-readiness-green" />
+                  Low Risk
                 </span>
-                <span className="text-xs font-normal text-field-muted">({summaryData.low_count})</span>
+                <span className="text-[11px] font-mono text-field-muted">&lt; 35 score</span>
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">Nominal readiness threshold</p>
-            </div>
-
-            {/* Elevated Concern Percentage */}
-            <div className="bg-field-surface border border-field-border rounded-lg p-4">
-              <span className="text-xs font-semibold text-triage-red block">
-                Elevated Welfare Risk
-              </span>
-              <div className="mt-2 text-2xl font-bold text-triage-red flex items-baseline gap-1.5">
-                <span>{elevatedPercent}%</span>
-                <span className="text-xs font-normal text-field-muted">
-                  ({summaryData.high_count + summaryData.critical_count})
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-readiness-green">
+                  {lowCount}
+                </span>
+                <span className="text-xs text-field-muted font-mono">
+                  ({lowPercent}%)
                 </span>
               </div>
-              <p className="text-[11px] text-field-muted mt-0.5">High and Critical triage tiers</p>
+              <p className="text-[11px] text-field-muted mt-1">Nominal baseline readiness</p>
+            </div>
+
+            {/* Moderate Risk Card */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4 transition-all hover:border-command-blue/40">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-command-blue flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-command-blue" />
+                  Moderate Risk
+                </span>
+                <span className="text-[11px] font-mono text-field-muted">35 - 64 score</span>
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-command-blue">
+                  {moderateCount}
+                </span>
+                <span className="text-xs text-field-muted font-mono">
+                  ({moderatePercent}%)
+                </span>
+              </div>
+              <p className="text-[11px] text-field-muted mt-1">Routine monitoring tier</p>
+            </div>
+
+            {/* High & Critical Risk Card */}
+            <div className="bg-field-surface border border-field-border rounded-lg p-4 transition-all hover:border-triage-red/40">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-triage-red flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-triage-red" />
+                  High & Critical Risk
+                </span>
+                <span className="text-[11px] font-mono text-field-muted">&ge; 65 score</span>
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-triage-red">
+                  {highCount + criticalCount}
+                </span>
+                <span className="text-xs text-field-muted font-mono">
+                  ({(Number(highPercent) + Number(criticalPercent)).toFixed(1)}%)
+                </span>
+              </div>
+              <p className="text-[11px] text-field-muted mt-1">
+                {highCount} high + {criticalCount} critical urgency
+              </p>
             </div>
           </div>
 
-          {/* Aggregate Risk Category Breakdown Bar Chart */}
-          <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-field-border">
+          {/* Minimalistic Risk Distribution Overview */}
+          <div className="bg-field-surface border border-field-border rounded-lg p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-field-primary">
-                  Unit Welfare Risk Distribution
+                <h2 className="text-sm sm:text-base font-bold text-field-primary">
+                  Personnel Welfare Risk Distribution
                 </h2>
                 <p className="text-xs text-field-muted mt-0.5">
-                  Macro breakdown across predictive operational tiers (Low &lt; 35, Moderate 35-64, High 65-84, Critical &ge; 85).
+                  Proportionate distribution of personnel across predictive risk categories.
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                {summaryData.distribution.map((item) => (
-                  <div key={item.category} className="flex items-center gap-1.5 text-xs">
-                    <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: item.color }} />
-                    <span className="text-field-muted">{item.label}</span>
+              {/* Minimalistic inline stats badges */}
+              <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#2E8B68]" />
+                  <span className="text-field-muted">Low:</span>
+                  <strong className="text-field-primary">{lowCount}</strong>
+                  <span className="text-field-muted">({lowPercent}%)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#2965A8]" />
+                  <span className="text-field-muted">Moderate:</span>
+                  <strong className="text-field-primary">{moderateCount}</strong>
+                  <span className="text-field-muted">({moderatePercent}%)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#C97A1E]" />
+                  <span className="text-field-muted">High:</span>
+                  <strong className="text-field-primary">{highCount}</strong>
+                  <span className="text-field-muted">({highPercent}%)</span>
+                </div>
+                {criticalCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-[#D6453D]" />
+                    <span className="text-field-muted">Critical:</span>
+                    <strong className="text-field-primary">{criticalCount}</strong>
+                    <span className="text-field-muted">({criticalPercent}%)</span>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
-            <div className="w-full h-56 pt-1">
+            {/* Minimalistic Multi-segment Progress Bar */}
+            <div className="w-full bg-field-surface-subtle border border-field-border rounded-full h-3.5 overflow-hidden flex shadow-inner">
+              {lowCount > 0 && (
+                <div
+                  style={{ width: `${lowPercent}%` }}
+                  className="bg-[#2E8B68] h-full transition-all duration-500 hover:opacity-90"
+                  title={`Low Risk: ${lowCount} personnel (${lowPercent}%)`}
+                />
+              )}
+              {moderateCount > 0 && (
+                <div
+                  style={{ width: `${moderatePercent}%` }}
+                  className="bg-[#2965A8] h-full transition-all duration-500 hover:opacity-90"
+                  title={`Moderate Risk: ${moderateCount} personnel (${moderatePercent}%)`}
+                />
+              )}
+              {highCount > 0 && (
+                <div
+                  style={{ width: `${highPercent}%` }}
+                  className="bg-[#C97A1E] h-full transition-all duration-500 hover:opacity-90"
+                  title={`High Risk: ${highCount} personnel (${highPercent}%)`}
+                />
+              )}
+              {criticalCount > 0 && (
+                <div
+                  style={{ width: `${criticalPercent}%` }}
+                  className="bg-[#D6453D] h-full transition-all duration-500 hover:opacity-90"
+                  title={`Critical Urgency: ${criticalCount} personnel (${criticalPercent}%)`}
+                />
+              )}
+            </div>
+
+            {/* Bar Chart Container */}
+            <div className="w-full h-44 pt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={summaryData.distribution}
-                  margin={{ top: 10, right: 15, left: -20, bottom: 10 }}
+                  data={activeDistribution}
+                  margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="2 2" stroke="#222D37" vertical={false} />
+                  <CartesianGrid strokeDasharray="2 2" stroke="var(--color-field-border)" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    stroke="#8294A2"
+                    stroke="var(--color-field-muted)"
                     fontSize={11}
                     tickLine={false}
-                    axisLine={{ stroke: '#222D37' }}
+                    axisLine={{ stroke: 'var(--color-field-border)' }}
                   />
                   <YAxis
-                    stroke="#8294A2"
+                    stroke="var(--color-field-muted)"
                     fontSize={11}
                     tickLine={false}
-                    axisLine={{ stroke: '#222D37' }}
+                    axisLine={{ stroke: 'var(--color-field-border)' }}
                     allowDecimals={false}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: '#141C22' }} />
+                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'var(--color-field-surface-subtle)' }} />
                   <Bar
                     dataKey="count"
-                    radius={[2, 2, 0, 0]}
-                    barSize={48}
-                    isAnimationActive={false}
+                    radius={[3, 3, 0, 0]}
+                    barSize={40}
+                    isAnimationActive={true}
                   >
-                    {summaryData.distribution.map((entry) => (
+                    {activeDistribution.map((entry) => (
                       <Cell key={`cell-${entry.category}`} fill={entry.color} />
                     ))}
                   </Bar>
