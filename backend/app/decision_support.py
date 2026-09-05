@@ -35,94 +35,122 @@ def generate_change_request_recommendation(
         # Leave Request logic
         if (is_high_risk or is_elevated_stress) and (has_leave_gap or has_sleep_fatigue):
             return (
-                "RECOMMEND APPROVAL",
-                "Leave gap and recovery duration are significant contributors to the employee's elevated welfare-risk prediction."
+                "CONSIDER APPROVING",
+                "The personnel currently has elevated welfare risk, with prolonged leave gap, elevated fatigue and declining sleep contributing to the prediction."
             )
         elif is_high_risk or is_elevated_stress:
             return (
-                "RECOMMEND APPROVAL",
-                "Insufficient recent leave and elevated stress are contributing factors to the employee's elevated welfare-risk prediction."
+                "CONSIDER APPROVING",
+                "Insufficient recent rest windows and elevated stress indicators contribute to the personnel's elevated welfare-risk prediction."
             )
         else:
             return (
-                "CONSIDER APPROVAL",
-                "Routine operational leave request within acceptable welfare thresholds."
+                "CONSIDER APPROVING",
+                "Routine operational leave request within manageable baseline welfare parameters."
             )
 
-    elif req_type in ("increase_workers", "increase workers"):
-        # Increase Workers
-        if has_workload or is_elevated_stress or is_high_risk:
-            return (
-                "RECOMMEND APPROVAL",
-                "Elevated workload and duty-hour deviation are major contributors to the employee's current welfare-risk prediction."
-            )
-        else:
-            return (
-                "CONSIDER APPROVAL",
-                "Staff augmentation can help sustain baseline duty pacing and prevent future workload strain."
-            )
+    elif req_type in ("work_hours", "change_work_hours", "work hours"):
+        # Work hours: reduce vs increase
+        current_hrs = float(request_details.get("current_hours", 10))
+        requested_hrs = float(request_details.get("requested_hours", 8))
+        is_reduction = requested_hrs < current_hrs
 
-    elif req_type in ("decrease_workers", "decrease workers"):
-        # Decrease Workers
-        if is_high_risk or is_elevated_stress or has_workload:
-            return (
-                "REVIEW CAREFULLY",
-                "Current workload is already elevated and reducing staffing may increase welfare-risk prediction for this unit."
-            )
+        if is_reduction:
+            if has_workload or is_elevated_stress or is_high_risk:
+                return (
+                    "CONSIDER APPROVING",
+                    "Elevated duty hours and workload deviation are among the largest contributors to the current welfare-risk prediction."
+                )
+            else:
+                return (
+                    "CONSIDER APPROVING",
+                    "Schedule adjustment within unit tolerance; workload hours are at manageable operational levels."
+                )
         else:
-            return (
-                "REVIEW CAREFULLY",
-                "Ensure operational coverage remains sufficient before reducing unit personnel allocation."
-            )
+            # Increase work hours
+            if is_high_risk or is_elevated_stress or has_workload or has_sleep_fatigue:
+                return (
+                    "REVIEW CAREFULLY",
+                    "Current workload, stress, and fatigue indicators are already contributing significantly to elevated welfare risk."
+                )
+            else:
+                return (
+                    "CONSIDER APPROVING",
+                    "Personnel currently exhibits stable readiness metrics to accommodate temporary workload augmentation."
+                )
 
     elif req_type == "transfer":
         # Transfer Request
-        if has_hardship_or_transfer or is_high_risk:
+        if has_hardship_or_transfer or is_high_risk or is_elevated_stress:
             return (
-                "CONSIDER APPROVAL",
-                "Deployment hardship and transfer-related indicators are contributing significantly to the employee's elevated welfare-risk prediction."
+                "CONSIDER REVIEWING",
+                "Deployment hardship and elevated welfare-risk indicators are currently contributing to the personnel's risk profile."
             )
         else:
             return (
-                "CONSIDER APPROVAL",
-                "Evaluate administrative vacancy in preferred unit; current welfare risk is within manageable parameters."
+                "CONSIDER REVIEWING",
+                "Evaluate operational posting vacancy; current welfare indicators are within stable baseline parameters."
+            )
+
+    elif req_type in ("night_to_day", "night to day"):
+        # Night -> Day Shift change
+        if has_night_shifts or has_sleep_fatigue or is_high_risk or is_elevated_stress:
+            return (
+                "CONSIDER APPROVING",
+                "Frequent night shifts and reduced sleep are contributing to elevated welfare risk."
+            )
+        else:
+            return (
+                "CONSIDER APPROVING",
+                "Transitioning to day schedule supports normalized circadian recovery and circadian fatigue mitigation."
+            )
+
+    elif req_type in ("day_to_night", "day to night"):
+        # Day -> Night Shift change
+        if has_night_shifts or has_sleep_fatigue or is_high_risk or is_elevated_stress:
+            return (
+                "REVIEW CAREFULLY",
+                "Sleep and night-shift indicators are already contributing to elevated welfare risk."
+            )
+        else:
+            return (
+                "CONSIDER APPROVING",
+                "Personnel currently demonstrates stable sleep and fatigue margins for night duty assignment."
             )
 
     elif req_type in ("shift_change", "shift change"):
-        # Shift change logic
+        # Legacy/generic shift change support
         requested_shift = str(request_details.get("requested_shift", "")).lower()
         if "night" in requested_shift:
-            # Transitioning Day -> Night
             if has_night_shifts or is_high_risk or has_sleep_fatigue:
                 return (
-                    "CONSIDER REJECTING",
-                    "Night-shift exposure is already contributing significantly to the model's elevated welfare-risk prediction."
+                    "REVIEW CAREFULLY",
+                    "Sleep and night-shift indicators are already contributing to elevated welfare risk."
                 )
             else:
                 return (
-                    "CONSIDER CAREFULLY",
+                    "CONSIDER APPROVING",
                     "Monitor sleep patterns if transitioning to nocturnal shift roster."
                 )
         else:
-            # Transitioning Night -> Day
             if has_night_shifts or has_sleep_fatigue or is_elevated_stress or is_high_risk:
                 return (
-                    "RECOMMEND APPROVAL",
-                    "Night-shift exposure and sleep deviation are significant contributors to the employee's current welfare-risk prediction."
+                    "CONSIDER APPROVING",
+                    "Frequent night shifts and reduced sleep are contributing to elevated welfare risk."
                 )
             else:
                 return (
-                    "RECOMMEND APPROVAL",
+                    "CONSIDER APPROVING",
                     "Transitioning to day schedule supports normalized circadian recovery and reduced fatigue."
                 )
 
     # Generic fallback
     if is_high_risk:
         return (
-            "CONSIDER APPROVAL",
-            "Employee presents elevated welfare-risk indicators; supportive schedule accommodation is advisable."
+            "CONSIDER APPROVING",
+            "Current indicators suggest increased welfare concern; supportive schedule accommodation is advisable."
         )
     return (
-        "CONSIDER APPROVAL",
-        "Operational parameters within acceptable bounds for commander/officer discretion."
+        "CONSIDER APPROVING",
+        "Operational parameters within acceptable bounds for Welfare Officer discretion."
     )

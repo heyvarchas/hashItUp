@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Shield, FileText, BarChart2, AlertCircle, Menu, X } from 'lucide-react';
+import { LogOut, Shield, FileText, BarChart2, Menu, X } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -83,33 +83,19 @@ export const AppLayout: React.FC = () => {
             )}
 
             {role === 'welfare_officer' && (
-              <>
-                <NavLink
-                  to="/welfare"
-                  end
-                  className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
-                      ? 'bg-command-blue text-white font-semibold'
-                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                    }`
-                  }
-                >
-                  <BarChart2 className="w-3.5 h-3.5" />
-                  <span>Unit Overview</span>
-                </NavLink>
-                <NavLink
-                  to="/welfare/alerts"
-                  className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
-                      ? 'bg-command-blue text-white font-semibold'
-                      : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
-                    }`
-                  }
-                >
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>Triage Queue</span>
-                </NavLink>
-              </>
+              <NavLink
+                to="/welfare"
+                end
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${isActive
+                    ? 'bg-command-blue text-white font-semibold'
+                    : 'text-field-muted hover:text-field-primary hover:bg-field-surface-elevated'
+                  }`
+                }
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                <span>Unit Overview</span>
+              </NavLink>
             )}
 
             {role === 'commander' && (
@@ -255,20 +241,6 @@ export const AppLayout: React.FC = () => {
                 >
                   <BarChart2 className="w-4 h-4" />
                   <span>Unit Overview</span>
-                </NavLink>
-                <NavLink
-                  to="/welfare/alerts"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2 ${
-                      isActive
-                        ? 'bg-command-blue text-white font-semibold'
-                        : 'text-field-primary hover:bg-field-surface-elevated'
-                    }`
-                  }
-                >
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Triage Queue</span>
                 </NavLink>
               </div>
             )}

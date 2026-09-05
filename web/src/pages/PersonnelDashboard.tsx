@@ -10,8 +10,7 @@ import {
   Layers,
   Send,
   Clock,
-  MapPin,
-  UserPlus
+  MapPin
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RequestForChangeModal } from '../components/RequestForChangeModal';
@@ -72,8 +71,14 @@ export const PersonnelDashboard: React.FC = () => {
   const [riskData, setRiskData] = useState<RiskOverview | null>(null);
   const [myRequests, setMyRequests] = useState<ChangeRequestItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedModalType, setSelectedModalType] = useState<any>('leave');
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  const handleOpenModal = (type: string = 'leave') => {
+    setSelectedModalType(type);
+    setIsModalOpen(true);
+  };
 
   const fetchData = async () => {
     if (!user) return;
@@ -419,7 +424,7 @@ export const PersonnelDashboard: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenModal('leave')}
             className="px-4 py-2.5 bg-command-blue hover:bg-blue-600 text-white rounded text-xs font-semibold transition-colors flex items-center gap-2 shrink-0 shadow-sm"
           >
             <Send className="w-3.5 h-3.5" />
@@ -429,50 +434,59 @@ export const PersonnelDashboard: React.FC = () => {
 
         {/* Quick-Launch Tiles */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+          {/* 1. Leave */}
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenModal('leave')}
             className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
           >
             <Calendar className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-semibold text-field-primary block">Leave</span>
-            <span className="text-[10px] text-field-muted">5-day rest block</span>
+            <span className="text-[10px] text-field-muted">Request time off</span>
           </button>
+
+          {/* 2. Work Hours */}
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenModal('work_hours')}
             className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
           >
-            <UserPlus className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold text-field-primary block">+ Workers</span>
-            <span className="text-[10px] text-field-muted">Workload support</span>
+            <Clock className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">Work Hours</span>
+            <span className="text-[10px] text-field-muted">Change duty hours</span>
           </button>
+
+          {/* 3. Transfer */}
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
-          >
-            <UserPlus className="w-4 h-4 text-field-muted mb-1 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold text-field-primary block">- Workers</span>
-            <span className="text-[10px] text-field-muted">Pacing adjustment</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenModal('transfer')}
             className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
           >
             <MapPin className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-semibold text-field-primary block">Transfer</span>
-            <span className="text-[10px] text-field-muted">Unit relocation</span>
+            <span className="text-[10px] text-field-muted">Request transfer</span>
           </button>
+
+          {/* 4. Day -> Night */}
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group col-span-2 sm:col-span-1"
+            onClick={() => handleOpenModal('day_to_night')}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group"
           >
             <Clock className="w-4 h-4 text-command-blue mb-1 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold text-field-primary block">Shift Change</span>
-            <span className="text-[10px] text-field-muted">Day ↔ Night</span>
+            <span className="text-xs font-semibold text-field-primary block">Day → Night</span>
+            <span className="text-[10px] text-field-muted">Request night duty</span>
+          </button>
+
+          {/* 5. Night -> Day */}
+          <button
+            type="button"
+            onClick={() => handleOpenModal('night_to_day')}
+            className="p-3 bg-field-surface-subtle border border-field-border rounded hover:border-command-blue/50 text-left transition-colors group col-span-2 sm:col-span-1"
+          >
+            <Clock className="w-4 h-4 text-readiness-green mb-1 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold text-field-primary block">Night → Day</span>
+            <span className="text-[10px] text-field-muted">Request day duty</span>
           </button>
         </div>
       </div>
@@ -543,14 +557,19 @@ export const PersonnelDashboard: React.FC = () => {
                     if (req.request_type === 'leave') {
                       return `${req.request_details?.leave_days ?? 5} Days (${req.request_details?.leave_type ?? 'Casual'})`;
                     }
-                    if (req.request_type === 'increase_workers') {
-                      return `+${req.request_details?.additional_workers_requested ?? 1} Workers`;
-                    }
-                    if (req.request_type === 'decrease_workers') {
-                      return `-${req.request_details?.workers_to_decrease ?? 1} Workers`;
+                    if (req.request_type === 'work_hours') {
+                      return `${req.request_details?.current_hours ?? 10} hrs/day → ${req.request_details?.requested_hours ?? 8} hrs/day`;
                     }
                     if (req.request_type === 'transfer') {
-                      return `To: ${req.request_details?.preferred_transfer_unit_location ?? 'N/A'}`;
+                      const fromUnit = req.request_details?.current_posting || 'Current Unit';
+                      const toUnit = req.request_details?.requested_posting || req.request_details?.preferred_transfer_unit_location || 'Requested Unit';
+                      return `${fromUnit} → ${toUnit}`;
+                    }
+                    if (req.request_type === 'day_to_night') {
+                      return 'Day Shift → Night Shift';
+                    }
+                    if (req.request_type === 'night_to_day') {
+                      return 'Night Shift → Day Shift';
                     }
                     if (req.request_type === 'shift_change') {
                       return `Shift: ${req.request_details?.requested_shift ?? 'Schedule'}`;
@@ -558,10 +577,19 @@ export const PersonnelDashboard: React.FC = () => {
                     return JSON.stringify(req.request_details);
                   };
 
+                  const formatTypeLabel = () => {
+                    if (req.request_type === 'leave') return 'Leave';
+                    if (req.request_type === 'work_hours') return 'Work Hours';
+                    if (req.request_type === 'transfer') return 'Transfer';
+                    if (req.request_type === 'day_to_night') return 'Day → Night';
+                    if (req.request_type === 'night_to_day') return 'Night → Day';
+                    return req.request_type.replace('_', ' ');
+                  };
+
                   return (
                     <tr key={req.request_id} className="hover:bg-field-surface-elevated transition-colors">
                       <td className="py-3 pr-4 font-semibold text-field-primary capitalize">
-                        {req.request_type.replace('_', ' ')}
+                        {formatTypeLabel()}
                       </td>
                       <td className="py-3 pr-4 max-w-xs">
                         <div className="font-medium text-field-primary text-[11px]">{formatDetails()}</div>
@@ -606,6 +634,7 @@ export const PersonnelDashboard: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmitted={fetchData}
+        initialType={selectedModalType}
       />
 
       {/* Identity Security Stamp */}

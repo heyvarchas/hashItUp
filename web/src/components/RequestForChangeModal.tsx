@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Calendar,
-  UserPlus,
-  UserMinus,
   MapPin,
   Clock,
   Send,
@@ -17,28 +15,41 @@ interface RequestModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitted: () => void;
+  initialType?: RequestType;
 }
 
-type RequestType = 'leave' | 'increase_workers' | 'decrease_workers' | 'transfer' | 'shift_change';
+type RequestType = 'leave' | 'work_hours' | 'transfer' | 'day_to_night' | 'night_to_day';
 
 export const RequestForChangeModal: React.FC<RequestModalProps> = ({
   isOpen,
   onClose,
   onSubmitted,
+  initialType,
 }) => {
   const { user } = useAuth();
-  const [selectedType, setSelectedType] = useState<RequestType>('leave');
+  const [selectedType, setSelectedType] = useState<RequestType>(initialType || 'leave');
+
+  // Sync initialType when passed or changed
+  React.useEffect(() => {
+    if (initialType) {
+      setSelectedType(initialType);
+    }
+  }, [initialType]);
 
   // Form states
+  // 1. Leave
   const [leaveDays, setLeaveDays] = useState<number>(5);
   const [leaveType, setLeaveType] = useState<string>('Casual Leave');
 
-  const [increaseWorkersCount, setIncreaseWorkersCount] = useState<number>(2);
-  const [decreaseWorkersCount, setDecreaseWorkersCount] = useState<number>(1);
+  // 2. Work Hours
+  const [currentHours, setCurrentHours] = useState<number>(10);
+  const [requestedHours, setRequestedHours] = useState<number>(8);
 
-  const [transferLocation, setTransferLocation] = useState<string>('');
-  const [shiftOption, setShiftOption] = useState<'Day to Night' | 'Night to Day'>('Night to Day');
+  // 3. Transfer
+  const [currentPosting, setCurrentPosting] = useState<string>('Current Unit');
+  const [requestedPosting, setRequestedPosting] = useState<string>('Requested Unit');
 
+  // Common fields
   const [reason, setReason] = useState<string>('');
   const [additionalNote, setAdditionalNote] = useState<string>('');
 
@@ -66,21 +77,26 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
         leave_days: Number(leaveDays),
         leave_type: leaveType,
       };
-    } else if (selectedType === 'increase_workers') {
+    } else if (selectedType === 'work_hours') {
       requestDetails = {
-        additional_workers_requested: Number(increaseWorkersCount),
-      };
-    } else if (selectedType === 'decrease_workers') {
-      requestDetails = {
-        workers_to_decrease: Number(decreaseWorkersCount),
+        current_hours: Number(currentHours),
+        requested_hours: Number(requestedHours),
       };
     } else if (selectedType === 'transfer') {
       requestDetails = {
-        preferred_transfer_unit_location: transferLocation.trim() || 'Headquarters Garrison',
+        current_posting: currentPosting.trim() || 'Current Unit',
+        requested_posting: requestedPosting.trim() || 'Requested Unit',
+        preferred_transfer_unit_location: requestedPosting.trim() || 'Requested Unit',
       };
-    } else if (selectedType === 'shift_change') {
+    } else if (selectedType === 'day_to_night') {
       requestDetails = {
-        requested_shift: shiftOption,
+        current_shift: 'Day',
+        requested_shift: 'Night',
+      };
+    } else if (selectedType === 'night_to_day') {
+      requestDetails = {
+        current_shift: 'Night',
+        requested_shift: 'Day',
       };
     }
 
@@ -123,32 +139,32 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
   const TYPE_CONFIG = [
     {
       type: 'leave' as RequestType,
-      label: 'Request for Leave',
-      desc: 'Apply for operational respite or family emergency leave.',
+      label: 'Leave',
+      desc: 'Request time off',
       icon: Calendar,
     },
     {
-      type: 'increase_workers' as RequestType,
-      label: 'Increase Workers',
-      desc: 'Request additional personnel for heavy duty workload.',
-      icon: UserPlus,
-    },
-    {
-      type: 'decrease_workers' as RequestType,
-      label: 'Decrease Workers',
-      desc: 'Request staff decrement if operational tempo is low.',
-      icon: UserMinus,
+      type: 'work_hours' as RequestType,
+      label: 'Work Hours',
+      desc: 'Change duty hours',
+      icon: Clock,
     },
     {
       type: 'transfer' as RequestType,
-      label: 'Request Transfer',
-      desc: 'Seek deployment rotation to an alternate unit/location.',
+      label: 'Transfer',
+      desc: 'Request transfer',
       icon: MapPin,
     },
     {
-      type: 'shift_change' as RequestType,
-      label: 'Shift Change',
-      desc: 'Transition between Day and Night operational schedules.',
+      type: 'day_to_night' as RequestType,
+      label: 'Day → Night',
+      desc: 'Request night duty',
+      icon: Clock,
+    },
+    {
+      type: 'night_to_day' as RequestType,
+      label: 'Night → Day',
+      desc: 'Request day duty',
       icon: Clock,
     },
   ];
@@ -198,7 +214,7 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
             <label className="text-xs font-semibold text-field-muted block mb-2">
               Select Request Type
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {TYPE_CONFIG.map((item) => {
                 const Icon = item.icon;
                 const isSelected = selectedType === item.type;
@@ -209,7 +225,7 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
                     onClick={() => setSelectedType(item.type)}
                     className={`text-left p-2.5 rounded border transition-all flex items-start gap-2.5 ${
                       isSelected
-                        ? 'bg-command-blue/15 border-command-blue text-field-primary'
+                        ? 'bg-command-blue/15 border-command-blue text-field-primary ring-1 ring-command-blue'
                         : 'bg-field-surface-subtle border-field-border text-field-muted hover:border-field-primary/40 hover:text-field-primary'
                     }`}
                   >
@@ -226,125 +242,194 @@ export const RequestForChangeModal: React.FC<RequestModalProps> = ({
 
           {/* 2. Specific Form Fields Based on Type */}
           <div className="p-3.5 bg-field-surface-subtle border border-field-border rounded-lg space-y-3">
+            {/* A. LEAVE */}
             {selectedType === 'leave' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-field-muted block mb-1">
-                    Number of Leave Days *
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={leaveDays}
-                    onChange={(e) => setLeaveDays(parseInt(e.target.value) || 1)}
-                    required
-                    className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
-                  />
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-field-primary pb-1 border-b border-field-border">
+                  Request for Leave
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-field-muted block mb-1">
-                    Leave Type *
-                  </label>
-                  <select
-                    value={leaveType}
-                    onChange={(e) => setLeaveType(e.target.value)}
-                    className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
-                  >
-                    <option value="Casual Leave">Casual Leave (Rest & Recuperation)</option>
-                    <option value="Earned / Annual Leave">Earned / Annual Leave</option>
-                    <option value="Emergency / Medical Leave">Emergency / Medical Leave</option>
-                    <option value="Compassionate Leave">Compassionate Leave</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Number of Leave Days *
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={leaveDays}
+                      onChange={(e) => setLeaveDays(parseInt(e.target.value) || 1)}
+                      required
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Leave Type *
+                    </label>
+                    <select
+                      value={leaveType}
+                      onChange={(e) => setLeaveType(e.target.value)}
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    >
+                      <option value="Casual Leave">Casual Leave (Rest & Recuperation)</option>
+                      <option value="Earned / Annual Leave">Earned / Annual Leave</option>
+                      <option value="Emergency / Medical Leave">Emergency / Medical Leave</option>
+                      <option value="Compassionate Leave">Compassionate Leave</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
 
-            {selectedType === 'increase_workers' && (
-              <div>
-                <label className="text-xs font-semibold text-field-muted block mb-1">
-                  Requested Additional Workers *
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={increaseWorkersCount}
-                  onChange={(e) => setIncreaseWorkersCount(parseInt(e.target.value) || 1)}
-                  required
-                  className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
-                />
-                <span className="text-[10px] text-field-muted mt-1 block">
-                  Augmentation to alleviate high duty-hours and workload tempo.
-                </span>
+            {/* B. WORK HOURS */}
+            {selectedType === 'work_hours' && (
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-field-primary pb-1 border-b border-field-border">
+                  Request Change in Work Hours
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Current Duty Hours (hrs/day) *
+                    </label>
+                    <input
+                      type="number"
+                      min={4}
+                      max={18}
+                      value={currentHours}
+                      onChange={(e) => setCurrentHours(parseInt(e.target.value) || 10)}
+                      required
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Requested Duty Hours (hrs/day) *
+                    </label>
+                    <input
+                      type="number"
+                      min={4}
+                      max={18}
+                      value={requestedHours}
+                      onChange={(e) => setRequestedHours(parseInt(e.target.value) || 8)}
+                      required
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-field-muted">
+                  Example: Reduce duty hours from 10 hours/day to 8 hours/day, or request temporary workload augmentation.
+                </p>
               </div>
             )}
 
-            {selectedType === 'decrease_workers' && (
-              <div>
-                <label className="text-xs font-semibold text-field-muted block mb-1">
-                  Number of Workers to Decrease *
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={decreaseWorkersCount}
-                  onChange={(e) => setDecreaseWorkersCount(parseInt(e.target.value) || 1)}
-                  required
-                  className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
-                />
-                <span className="text-[10px] text-triage-amber mt-1 block">
-                  ⚠️ Note: Decreasing personnel will be reviewed carefully to prevent team workload spikes.
-                </span>
-              </div>
-            )}
-
+            {/* C. TRANSFER */}
             {selectedType === 'transfer' && (
-              <div>
-                <label className="text-xs font-semibold text-field-muted block mb-1">
-                  Preferred Transfer Unit / Location *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., 2nd Battalion Support / Base Logistics Depot"
-                  value={transferLocation}
-                  onChange={(e) => setTransferLocation(e.target.value)}
-                  required
-                  className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
-                />
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-field-primary pb-1 border-b border-field-border">
+                  Request Transfer
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Current Posting *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Current Unit"
+                      value={currentPosting}
+                      onChange={(e) => setCurrentPosting(e.target.value)}
+                      required
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Requested Posting *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Requested Unit"
+                      value={requestedPosting}
+                      onChange={(e) => setRequestedPosting(e.target.value)}
+                      required
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-1.5 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
-            {selectedType === 'shift_change' && (
-              <div>
-                <label className="text-xs font-semibold text-field-muted block mb-1">
-                  Requested Shift Change *
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShiftOption('Night to Day')}
-                    className={`p-2.5 rounded border text-xs font-semibold text-center transition-colors ${
-                      shiftOption === 'Night to Day'
-                        ? 'bg-command-blue/20 border-command-blue text-command-blue'
-                        : 'bg-field-surface border-field-border text-field-muted hover:text-field-primary'
-                    }`}
-                  >
-                    Night → Day
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShiftOption('Day to Night')}
-                    className={`p-2.5 rounded border text-xs font-semibold text-center transition-colors ${
-                      shiftOption === 'Day to Night'
-                        ? 'bg-command-blue/20 border-command-blue text-command-blue'
-                        : 'bg-field-surface border-field-border text-field-muted hover:text-field-primary'
-                    }`}
-                  >
-                    Day → Night
-                  </button>
+            {/* D. DAY -> NIGHT */}
+            {selectedType === 'day_to_night' && (
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-field-primary pb-1 border-b border-field-border">
+                  Request Shift Change: Day → Night
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Current Shift
+                    </label>
+                    <input
+                      type="text"
+                      value="Day"
+                      disabled
+                      className="w-full bg-field-surface/60 border border-field-border rounded px-3 py-1.5 text-xs text-field-primary opacity-80 cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Requested Shift
+                    </label>
+                    <input
+                      type="text"
+                      value="Night"
+                      disabled
+                      className="w-full bg-field-surface/60 border border-field-border rounded px-3 py-1.5 text-xs text-command-blue font-bold opacity-90 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-field-muted">
+                  Requesting assignment to nocturnal operational schedule.
+                </p>
+              </div>
+            )}
+
+            {/* E. NIGHT -> DAY */}
+            {selectedType === 'night_to_day' && (
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-field-primary pb-1 border-b border-field-border">
+                  Request Shift Change: Night → Day
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Current Shift
+                    </label>
+                    <input
+                      type="text"
+                      value="Night"
+                      disabled
+                      className="w-full bg-field-surface/60 border border-field-border rounded px-3 py-1.5 text-xs text-field-primary opacity-80 cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-field-muted block mb-1">
+                      Requested Shift
+                    </label>
+                    <input
+                      type="text"
+                      value="Day"
+                      disabled
+                      className="w-full bg-field-surface/60 border border-field-border rounded px-3 py-1.5 text-xs text-readiness-green font-bold opacity-90 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-field-muted">
+                  Requesting assignment to daytime schedule for circadian recovery and fatigue alleviation.
+                </p>
               </div>
             )}
 

@@ -207,7 +207,7 @@ class UnitSummaryOut(BaseModel):
 # ---------------------------------------------------------------------------
 
 class ChangeRequestCreate(BaseModel):
-    request_type: str = Field(description="'leave', 'increase_workers', 'decrease_workers', 'transfer', or 'shift_change'")
+    request_type: str = Field(description="'leave', 'work_hours', 'transfer', 'day_to_night', 'night_to_day'")
     request_details: dict[str, Any] = Field(default_factory=dict)
     reason: str
     additional_note: Optional[str] = None

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   RefreshCw,
@@ -12,7 +12,9 @@ import {
   ClipboardList,
   CheckCircle,
   XCircle,
-  Sparkles
+  Sparkles,
+  Eye,
+  X
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import {
@@ -117,7 +119,12 @@ export const WelfareDashboard: React.FC = () => {
 
   const [summaryData, setSummaryData] = useState<UnitSummaryData | null>(null);
   const [personnelList, setPersonnelList] = useState<PersonnelRow[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<PendingChangeRequest[]>([]);
+  const [requestsList, setRequestsList] = useState<PendingChangeRequest[]>([]);
+  const [requestStatusFilter, setRequestStatusFilter] = useState<string>('PENDING');
+  const [requestTypeFilter, setRequestTypeFilter] = useState<string>('ALL');
+  const [requestRiskFilter, setRequestRiskFilter] = useState<string>('ALL');
+  const [selectedRequestForDetail, setSelectedRequestForDetail] = useState<PendingChangeRequest | null>(null);
+  const [detailPersonnelInfo, setDetailPersonnelInfo] = useState<any | null>(null);
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const [showRejectInput, setShowRejectInput] = useState<Record<string, boolean>>({});
@@ -126,7 +133,7 @@ export const WelfareDashboard: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Search & Filtering States
+  // Search & Filtering States for Roster
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
@@ -159,13 +166,22 @@ export const WelfareDashboard: React.FC = () => {
         setPersonnelList(pList);
       }
 
-      // 3. Fetch pending change requests for welfare officer
-      const resReqs = await fetch(`${API_BASE_URL}/requests/pending`, {
+      // 3. Fetch change requests for welfare officer
+      const resReqs = await fetch(`${API_BASE_URL}/requests`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (resReqs.ok) {
         const reqsData: PendingChangeRequest[] = await resReqs.json();
-        setPendingRequests(reqsData);
+        setRequestsList(reqsData);
+      } else {
+        // Fallback to /requests/pending if /requests not available
+        const fallbackRes = await fetch(`${API_BASE_URL}/requests/pending`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        if (fallbackRes.ok) {
+          const fbData = await fallbackRes.json();
+          setRequestsList(fbData);
+        }
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred while loading unit summary statistics.');
@@ -175,11 +191,33 @@ export const WelfareDashboard: React.FC = () => {
     }
   };
 
+  const handleOpenDetailModal = async (req: PendingChangeRequest) => {
+    setSelectedRequestForDetail(req);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/personnel/${req.person_id}`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDetailPersonnelInfo(data);
+      } else {
+        setDetailPersonnelInfo(null);
+      }
+    } catch {
+      setDetailPersonnelInfo(null);
+    }
+  };
+
   const handleDecision = async (requestId: string, decision: 'APPROVED' | 'REJECTED') => {
+    const reason = (rejectionReasons[requestId] || '').trim();
+    if (decision === 'REJECTED' && !reason) {
+      alert('Please enter a specific rejection reason for the personnel.');
+      return;
+    }
+
     setDecidingId(requestId);
     setActionSuccessMsg(null);
     try {
-      const reason = rejectionReasons[requestId] || undefined;
       const res = await fetch(`${API_BASE_URL}/requests/${requestId}/decision`, {
         method: 'PATCH',
         headers: {
@@ -188,7 +226,7 @@ export const WelfareDashboard: React.FC = () => {
         },
         body: JSON.stringify({
           decision,
-          reason,
+          reason: reason || undefined,
         }),
       });
 
@@ -197,9 +235,15 @@ export const WelfareDashboard: React.FC = () => {
         throw new Error(errJson.detail || 'Failed to submit decision.');
       }
 
+      await res.json();
       setActionSuccessMsg(`Request successfully ${decision === 'APPROVED' ? 'approved' : 'rejected'}. Employee notified.`);
-      // Remove from pending immediately
-      setPendingRequests((prev) => prev.filter((r) => r.request_id !== requestId));
+      // Update requests list
+      setRequestsList((prev) =>
+        prev.map((r) => (r.request_id === requestId ? { ...r, status: decision, officer_decision: decision, officer_reason: reason } : r))
+      );
+      if (selectedRequestForDetail?.request_id === requestId) {
+        setSelectedRequestForDetail((prev) => (prev ? { ...prev, status: decision, officer_decision: decision, officer_reason: reason } : null));
+      }
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (err: any) {
       alert(`Decision error: ${err.message}`);
@@ -211,6 +255,21 @@ export const WelfareDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [user]);
+
+  // Filter requests
+  const filteredRequests = requestsList.filter((r) => {
+    if (requestStatusFilter !== 'ALL' && r.status !== requestStatusFilter) return false;
+    if (requestTypeFilter !== 'ALL' && r.request_type !== requestTypeFilter) return false;
+    if (requestRiskFilter !== 'ALL') {
+      const isHigh = r.risk_score_at_submission >= 65;
+      const isModerate = r.risk_score_at_submission >= 40 && r.risk_score_at_submission < 65;
+      const isLow = r.risk_score_at_submission < 40;
+      if (requestRiskFilter === 'HIGH' && !isHigh) return false;
+      if (requestRiskFilter === 'MODERATE' && !isModerate) return false;
+      if (requestRiskFilter === 'LOW' && !isLow) return false;
+    }
+    return true;
+  });
 
   // Derive unique units for filter dropdown
   const uniqueUnits = Array.from(new Set(personnelList.map((p) => p.unit_id))).sort();
@@ -341,14 +400,6 @@ export const WelfareDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            <Link
-              to="/welfare/alerts"
-              className="px-3.5 py-2 bg-triage-red-bg hover:bg-red-950/60 text-triage-red border border-triage-red-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5"
-            >
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Open Triage Queue ({summaryData?.open_alerts_count ?? 0})</span>
-            </Link>
-
             <button
               onClick={fetchData}
               disabled={isRefreshing}
@@ -377,9 +428,9 @@ export const WelfareDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* CHANGE REQUESTS TRIAGE SECTION */}
+      {/* CHANGE REQUESTS SECTION */}
       <div className="bg-field-surface border border-field-border rounded-lg p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-field-border">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-field-border">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-command-blue/20 text-command-blue border border-command-blue/40">
@@ -389,38 +440,89 @@ export const WelfareDashboard: React.FC = () => {
             </div>
             <h2 className="text-base sm:text-lg font-bold text-field-primary flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-command-blue" />
-              <span>Pending Change Requests ({pendingRequests.length})</span>
+              <span>Pending Requests ({filteredRequests.filter((r) => r.status === 'PENDING').length} Pending / {filteredRequests.length} Total)</span>
             </h2>
             <p className="text-xs text-field-muted mt-0.5">
-              Review employee requests for leave, workload augmentation, unit transfers, or shift changes with ML risk context and TreeSHAP attribution.
+              Review personnel requests for leave, work hours, unit transfers, or shift rotations with ML risk context and TreeSHAP attribution.
             </p>
           </div>
-          <span className="text-xs font-mono text-field-muted hidden sm:inline">
-            Awaiting Review: {pendingRequests.length}
-          </span>
+
+          {/* Filter Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Status Filter */}
+            <select
+              value={requestStatusFilter}
+              onChange={(e) => setRequestStatusFilter(e.target.value)}
+              className="bg-field-surface border border-field-border rounded px-2.5 py-1.5 text-field-primary focus:outline-none focus:border-command-blue"
+            >
+              <option value="ALL">Status: All</option>
+              <option value="PENDING">Status: Pending</option>
+              <option value="APPROVED">Status: Approved</option>
+              <option value="REJECTED">Status: Rejected</option>
+            </select>
+
+            {/* Request Type Filter */}
+            <select
+              value={requestTypeFilter}
+              onChange={(e) => setRequestTypeFilter(e.target.value)}
+              className="bg-field-surface border border-field-border rounded px-2.5 py-1.5 text-field-primary focus:outline-none focus:border-command-blue"
+            >
+              <option value="ALL">Type: All</option>
+              <option value="leave">Leave</option>
+              <option value="work_hours">Work Hours</option>
+              <option value="transfer">Transfer</option>
+              <option value="day_to_night">Day → Night</option>
+              <option value="night_to_day">Night → Day</option>
+            </select>
+
+            {/* Risk Level Filter */}
+            <select
+              value={requestRiskFilter}
+              onChange={(e) => setRequestRiskFilter(e.target.value)}
+              className="bg-field-surface border border-field-border rounded px-2.5 py-1.5 text-field-primary focus:outline-none focus:border-command-blue"
+            >
+              <option value="ALL">Risk: All</option>
+              <option value="HIGH">Risk: High (≥65)</option>
+              <option value="MODERATE">Risk: Moderate (40-64)</option>
+              <option value="LOW">Risk: Low (&lt;40)</option>
+            </select>
+          </div>
         </div>
 
-        {pendingRequests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <div className="p-6 text-center bg-field-surface-subtle border border-field-border rounded text-xs text-field-muted">
-            ✓ No pending change requests. All employee accommodation requests have been processed.
+            ✓ No requests match the selected filters.
           </div>
         ) : (
           <div className="space-y-4">
-            {pendingRequests.map((req) => {
-              const reqLabel = req.request_type.replace('_', ' ').toUpperCase();
+            {filteredRequests.map((req) => {
+              const formatTypeLabel = () => {
+                if (req.request_type === 'leave') return 'LEAVE';
+                if (req.request_type === 'work_hours') return 'WORK HOURS';
+                if (req.request_type === 'transfer') return 'TRANSFER';
+                if (req.request_type === 'day_to_night') return 'DAY → NIGHT';
+                if (req.request_type === 'night_to_day') return 'NIGHT → DAY';
+                return req.request_type.replace('_', ' ').toUpperCase();
+              };
+              const reqLabel = formatTypeLabel();
               const isRejecting = showRejectInput[req.request_id];
               const formatDetails = () => {
                 if (req.request_type === 'leave') {
                   return `${req.request_details?.leave_days ?? 5} Days (${req.request_details?.leave_type ?? 'Casual Leave'})`;
                 }
-                if (req.request_type === 'increase_workers') {
-                  return `+${req.request_details?.additional_workers_requested ?? 1} Workers Requested`;
-                }
-                if (req.request_type === 'decrease_workers') {
-                  return `-${req.request_details?.workers_to_decrease ?? 1} Workers`;
+                if (req.request_type === 'work_hours') {
+                  return `Current: ${req.request_details?.current_hours ?? 10} hrs/day → Requested: ${req.request_details?.requested_hours ?? 8} hrs/day`;
                 }
                 if (req.request_type === 'transfer') {
-                  return `Preferred Unit: ${req.request_details?.preferred_transfer_unit_location ?? 'Headquarters'}`;
+                  const fromU = req.request_details?.current_posting || 'Current Unit';
+                  const toU = req.request_details?.requested_posting || req.request_details?.preferred_transfer_unit_location || 'Requested Unit';
+                  return `Current: ${fromU} → Requested: ${toU}`;
+                }
+                if (req.request_type === 'day_to_night') {
+                  return 'Current Shift: Day → Requested Shift: Night';
+                }
+                if (req.request_type === 'night_to_day') {
+                  return 'Current Shift: Night → Requested Shift: Day';
                 }
                 if (req.request_type === 'shift_change') {
                   return `Requested: ${req.request_details?.requested_shift ?? 'Schedule Change'}`;
@@ -429,8 +531,8 @@ export const WelfareDashboard: React.FC = () => {
               };
 
               // Determine recommendation styling
-              const isRecApprove = req.system_recommendation.includes('APPROVE');
-              const isRecReject = req.system_recommendation.includes('REJECT');
+              const isRecApprove = req.system_recommendation.includes('APPROVE') || req.system_recommendation.toLowerCase().includes('consider');
+              const isRecReject = req.system_recommendation.includes('REJECT') || req.system_recommendation.toLowerCase().includes('carefully');
 
               return (
                 <div
@@ -446,10 +548,21 @@ export const WelfareDashboard: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-field-primary font-mono">
-                            Employee: {req.person_id}
+                            Personnel: {req.person_id}
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded bg-command-blue/15 text-command-blue font-semibold border border-command-blue/30">
                             {reqLabel}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                              req.status === 'APPROVED'
+                                ? 'bg-readiness-green/15 text-readiness-green border-readiness-green/30'
+                                : req.status === 'REJECTED'
+                                ? 'bg-triage-red/15 text-triage-red border-triage-red/30'
+                                : 'bg-triage-amber/15 text-triage-amber border-triage-amber/30'
+                            }`}
+                          >
+                            {req.status}
                           </span>
                         </div>
                         <div className="text-xs text-field-primary font-semibold mt-0.5">
@@ -460,7 +573,7 @@ export const WelfareDashboard: React.FC = () => {
 
                     <div className="flex items-center gap-4 text-xs">
                       <div className="text-right">
-                        <span className="text-field-muted block text-[11px]">Current Welfare Risk</span>
+                        <span className="text-field-muted block text-[11px]">Welfare Risk</span>
                         <span className="font-bold text-sm text-field-primary">
                           {req.risk_score_at_submission} / 100
                           <span className={`ml-1.5 text-[10px] uppercase font-bold ${
@@ -471,7 +584,7 @@ export const WelfareDashboard: React.FC = () => {
                         </span>
                       </div>
                       <div className="text-right border-l border-field-border pl-4">
-                        <span className="text-field-muted block text-[11px]">Current Stress</span>
+                        <span className="text-field-muted block text-[11px]">Stress</span>
                         <span className="font-bold text-sm text-triage-amber">
                           {req.stress_score_at_submission} / 10
                           <span className="ml-1 text-[10px] font-semibold text-field-muted">
@@ -485,7 +598,7 @@ export const WelfareDashboard: React.FC = () => {
                   {/* Reason & SHAP Contributing Factors */}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
                     <div className="md:col-span-6 space-y-2">
-                      <span className="text-field-muted font-semibold block">Employee Stated Reason:</span>
+                      <span className="text-field-muted font-semibold block">Personnel Stated Reason:</span>
                       <p className="p-3 bg-field-surface border border-field-border rounded text-field-primary leading-relaxed">
                         "{req.reason}"
                       </p>
@@ -497,14 +610,14 @@ export const WelfareDashboard: React.FC = () => {
                     </div>
 
                     <div className="md:col-span-6 space-y-2">
-                      <span className="text-field-muted font-semibold block">Top Contributing Factors (Submission Snapshot):</span>
+                      <span className="text-field-muted font-semibold block">Main Factors (Risk Attribution):</span>
                       <div className="space-y-1.5 bg-field-surface border border-field-border p-3 rounded">
                         {req.contributing_factors_at_submission && req.contributing_factors_at_submission.length > 0 ? (
-                          req.contributing_factors_at_submission.slice(0, 5).map((f, i) => (
+                          req.contributing_factors_at_submission.slice(0, 4).map((f, i) => (
                             <div key={i} className="flex items-center justify-between text-[11px]">
-                              <span className="text-field-primary">{i + 1}. {f.display_name}</span>
+                              <span className="text-field-primary">{f.display_name}</span>
                               <span className={`font-mono font-semibold ${f.points_impact >= 0 ? 'text-triage-red' : 'text-readiness-green'}`}>
-                                {f.points_impact >= 0 ? `+${f.points_impact}` : f.points_impact} pts
+                                {f.points_impact >= 0 ? `+${f.points_impact}` : f.points_impact}
                               </span>
                             </div>
                           ))
@@ -520,22 +633,18 @@ export const WelfareDashboard: React.FC = () => {
                     isRecApprove
                       ? 'bg-triage-green-bg/60 border-triage-green-border'
                       : isRecReject
-                      ? 'bg-triage-red-bg/60 border-triage-red-border'
-                      : 'bg-triage-amber-bg/60 border-triage-amber-border'
+                      ? 'bg-triage-amber-bg/60 border-triage-amber-border'
+                      : 'bg-field-surface border-field-border'
                   }`}>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Sparkles className={`w-4 h-4 ${
-                          isRecApprove ? 'text-readiness-green' : isRecReject ? 'text-triage-red' : 'text-triage-amber'
-                        }`} />
+                        <Sparkles className="w-4 h-4 text-command-blue" />
                         <span className="text-xs font-bold uppercase tracking-wide text-field-primary">
-                          System Recommendation:
+                          Recommendation:
                         </span>
                         <span className={`text-xs font-extrabold px-2 py-0.5 rounded ${
                           isRecApprove
                             ? 'bg-readiness-green/20 text-readiness-green'
-                            : isRecReject
-                            ? 'bg-triage-red/20 text-triage-red'
                             : 'bg-triage-amber/20 text-triage-amber'
                         }`}>
                           {req.system_recommendation}
@@ -550,41 +659,54 @@ export const WelfareDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        disabled={decidingId === req.request_id}
-                        onClick={() => handleDecision(req.request_id, 'APPROVED')}
-                        className="px-4 py-2 bg-readiness-green hover:bg-emerald-600 text-white rounded text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                        onClick={() => handleOpenDetailModal(req)}
+                        className="px-3 py-2 bg-field-surface hover:bg-field-border text-field-primary border border-field-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
                       >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Approve</span>
+                        <Eye className="w-3.5 h-3.5 text-command-blue" />
+                        <span>View Details</span>
                       </button>
 
-                      <button
-                        type="button"
-                        disabled={decidingId === req.request_id}
-                        onClick={() => {
-                          setShowRejectInput((prev) => ({
-                            ...prev,
-                            [req.request_id]: !prev[req.request_id],
-                          }));
-                        }}
-                        className="px-3.5 py-2 bg-field-surface hover:bg-triage-red-bg text-triage-red border border-triage-red-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Reject...</span>
-                      </button>
+                      {req.status === 'PENDING' && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={decidingId === req.request_id}
+                            onClick={() => handleDecision(req.request_id, 'APPROVED')}
+                            className="px-3.5 py-2 bg-readiness-green hover:bg-emerald-600 text-white rounded text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>Approve</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={decidingId === req.request_id}
+                            onClick={() => {
+                              setShowRejectInput((prev) => ({
+                                ...prev,
+                                [req.request_id]: !prev[req.request_id],
+                              }));
+                            }}
+                            className="px-3 py-2 bg-field-surface hover:bg-triage-red-bg text-triage-red border border-triage-red-border rounded text-xs font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Reject...</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Optional Rejection Reason Expandable Panel */}
-                  {isRejecting && (
+                  {/* Rejection Reason Input Panel */}
+                  {isRejecting && req.status === 'PENDING' && (
                     <div className="p-3.5 bg-field-surface border border-triage-red-border/60 rounded-lg space-y-2">
-                      <label className="text-xs font-semibold text-field-muted block">
-                        Optional Rejection Reason / Note to Employee:
+                      <label className="text-xs font-semibold text-triage-red block">
+                        Rejection Reason (Required for Personnel Notification):
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <input
                           type="text"
-                          placeholder="e.g., Current staffing requirements do not permit the requested transfer at this time."
+                          placeholder="e.g., Current operational requirements do not permit the requested schedule change at this time."
                           value={rejectionReasons[req.request_id] || ''}
                           onChange={(e) =>
                             setRejectionReasons((prev) => ({
@@ -605,12 +727,283 @@ export const WelfareDashboard: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Resolved Decision Note (if decided) */}
+                  {req.status !== 'PENDING' && (
+                    <div className="p-3 bg-field-surface rounded border border-field-border text-xs text-field-muted flex items-center justify-between">
+                      <div>
+                        <span className="font-semibold text-field-primary">Officer Decision:</span>{' '}
+                        <span className={req.status === 'APPROVED' ? 'text-readiness-green font-bold' : 'text-triage-red font-bold'}>
+                          {req.status}
+                        </span>
+                        {req.officer_reason && <span className="ml-2">— Reason: "{req.officer_reason}"</span>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* REQUEST DETAIL VIEW MODAL */}
+      {selectedRequestForDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-field-surface border border-field-border rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-field-border flex items-center justify-between bg-field-surface-subtle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-command-blue/20 text-command-blue flex items-center justify-center font-mono font-bold text-sm">
+                  {selectedRequestForDetail.person_id.slice(-4)}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-field-primary flex items-center gap-2">
+                    <span>Request Details — {selectedRequestForDetail.person_id}</span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded border ${
+                        selectedRequestForDetail.status === 'APPROVED'
+                          ? 'bg-readiness-green/15 text-readiness-green border-readiness-green/30'
+                          : selectedRequestForDetail.status === 'REJECTED'
+                          ? 'bg-triage-red/15 text-triage-red border-triage-red/30'
+                          : 'bg-triage-amber/15 text-triage-amber border-triage-amber/30'
+                      }`}
+                    >
+                      {selectedRequestForDetail.status}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-field-muted mt-0.5">
+                    Submitted: {new Date(selectedRequestForDetail.submitted_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedRequestForDetail(null)}
+                className="p-1.5 text-field-muted hover:text-field-primary rounded-lg hover:bg-field-border transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-field-primary">
+              {/* 1. Request Information */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-field-muted flex items-center gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5 text-command-blue" />
+                  <span>Request Information</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-field-surface-subtle p-4 rounded-lg border border-field-border">
+                  <div>
+                    <span className="text-field-muted block text-[11px]">Request Type</span>
+                    <span className="font-semibold text-field-primary text-sm uppercase">
+                      {selectedRequestForDetail.request_type.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-field-muted block text-[11px]">Personnel ID</span>
+                    <span className="font-mono font-bold text-field-primary text-sm">
+                      {selectedRequestForDetail.person_id}
+                    </span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-field-muted block text-[11px]">Requested Change Details</span>
+                    <span className="font-semibold text-field-primary">
+                      {selectedRequestForDetail.request_type === 'leave' &&
+                        `${selectedRequestForDetail.request_details?.leave_days ?? 5} Days (${selectedRequestForDetail.request_details?.leave_type ?? 'Casual Leave'})`}
+                      {selectedRequestForDetail.request_type === 'work_hours' &&
+                        `Current: ${selectedRequestForDetail.request_details?.current_hours ?? 10} hrs/day → Requested: ${selectedRequestForDetail.request_details?.requested_hours ?? 8} hrs/day`}
+                      {selectedRequestForDetail.request_type === 'transfer' &&
+                        `Current Posting: ${selectedRequestForDetail.request_details?.current_posting || 'Current Unit'} → Requested Posting: ${selectedRequestForDetail.request_details?.requested_posting || selectedRequestForDetail.request_details?.preferred_transfer_unit_location || 'Requested Unit'}`}
+                      {selectedRequestForDetail.request_type === 'day_to_night' && 'Current Shift: Day → Requested Shift: Night'}
+                      {selectedRequestForDetail.request_type === 'night_to_day' && 'Current Shift: Night → Requested Shift: Day'}
+                      {selectedRequestForDetail.request_type === 'shift_change' &&
+                        `Requested: ${selectedRequestForDetail.request_details?.requested_shift}`}
+                    </span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-field-muted block text-[11px]">Stated Reason</span>
+                    <p className="mt-1 p-2.5 bg-field-surface border border-field-border rounded text-field-primary">
+                      "{selectedRequestForDetail.reason}"
+                    </p>
+                  </div>
+                  {selectedRequestForDetail.request_details?.additional_note && (
+                    <div className="sm:col-span-2">
+                      <span className="text-field-muted block text-[11px]">Additional Note</span>
+                      <p className="mt-1 text-field-muted italic">
+                        {selectedRequestForDetail.request_details.additional_note}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Current Welfare Information */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-field-muted flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-triage-amber" />
+                  <span>Current Welfare Status</span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3 bg-field-surface-subtle border border-field-border rounded-lg text-center">
+                    <span className="text-[11px] text-field-muted block">Stress Score</span>
+                    <span className="text-xl font-bold text-triage-amber mt-0.5 block">
+                      {detailPersonnelInfo?.wellness?.stress_score ?? selectedRequestForDetail.stress_score_at_submission} / 10
+                    </span>
+                  </div>
+                  <div className="p-3 bg-field-surface-subtle border border-field-border rounded-lg text-center">
+                    <span className="text-[11px] text-field-muted block">Welfare Risk</span>
+                    <span className="text-xl font-bold text-field-primary mt-0.5 block">
+                      {detailPersonnelInfo?.welfare_risk?.welfare_risk_score ?? selectedRequestForDetail.risk_score_at_submission} / 100
+                    </span>
+                  </div>
+                  <div className="p-3 bg-field-surface-subtle border border-field-border rounded-lg text-center">
+                    <span className="text-[11px] text-field-muted block">Risk Category</span>
+                    <span className="text-sm font-bold text-triage-red mt-1.5 block">
+                      {detailPersonnelInfo?.welfare_risk?.risk_category ?? (selectedRequestForDetail.risk_score_at_submission >= 65 ? 'HIGH' : 'MODERATE')}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-field-surface-subtle border border-field-border rounded-lg text-center">
+                    <span className="text-[11px] text-field-muted block">Sleep / Fatigue</span>
+                    <span className="text-sm font-bold text-field-primary mt-1.5 block">
+                      {detailPersonnelInfo?.wellness?.sleep_hours ?? 6}h / Fatigue: {detailPersonnelInfo?.wellness?.fatigue_score ?? 6}/10
+                    </span>
+                  </div>
+                </div>
+
+                {/* Additional metrics if personnel info is loaded */}
+                {detailPersonnelInfo && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-field-muted bg-field-surface-subtle p-3 rounded-lg border border-field-border">
+                    <div>Duty Hours: <strong className="text-field-primary">{detailPersonnelInfo.workload?.duty_hours} hrs/d</strong></div>
+                    <div>Shift: <strong className="text-field-primary">{detailPersonnelInfo.workload?.shift_type}</strong></div>
+                    <div>Days Since Leave: <strong className="text-field-primary">{detailPersonnelInfo.leave?.days_since_last_leave} days</strong></div>
+                    <div>Posting/Unit: <strong className="text-field-primary">{detailPersonnelInfo.personnel?.unit_id}</strong></div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Model Explanation (SHAP Factors) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-field-muted flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-command-blue" />
+                  <span>Factors Contributing to Current Risk (Explainable ML Attribution)</span>
+                </h4>
+                <div className="space-y-2 bg-field-surface-subtle p-4 rounded-lg border border-field-border">
+                  {selectedRequestForDetail.contributing_factors_at_submission && selectedRequestForDetail.contributing_factors_at_submission.length > 0 ? (
+                    selectedRequestForDetail.contributing_factors_at_submission.slice(0, 5).map((factor, idx) => {
+                      const impact = factor.points_impact;
+                      const widthPercent = Math.min(100, Math.max(15, Math.abs(impact) * 4));
+                      return (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-field-primary">{factor.display_name}</span>
+                            <span className={`font-mono font-bold ${impact >= 0 ? 'text-triage-red' : 'text-readiness-green'}`}>
+                              {impact >= 0 ? `+${impact}` : impact}
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-field-border rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${impact >= 0 ? 'bg-triage-red' : 'bg-readiness-green'}`}
+                              style={{ width: `${widthPercent}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-field-muted">No specific factor contributions recorded at submission.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Decision Support Recommendation */}
+              <div className="p-4 bg-command-blue/10 border border-command-blue/30 rounded-lg space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-command-blue" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-command-blue">
+                    System Decision Support
+                  </span>
+                  <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-command-blue/20 text-command-blue">
+                    {selectedRequestForDetail.system_recommendation}
+                  </span>
+                </div>
+                <p className="text-xs text-field-primary leading-relaxed">
+                  Reason: {selectedRequestForDetail.recommendation_reason}
+                </p>
+                <p className="text-[11px] text-field-muted italic pt-1">
+                  Note: Decision-support recommendations are informative guidance based on current welfare indicators. Final administrative authority belongs to the Welfare Officer.
+                </p>
+              </div>
+
+              {/* Officer Decision Action Section */}
+              {selectedRequestForDetail.status === 'PENDING' ? (
+                <div className="p-4 bg-field-surface-subtle border border-field-border rounded-lg space-y-3">
+                  <span className="font-bold text-xs text-field-primary block">Welfare Officer Action</span>
+                  <div className="space-y-2">
+                    <label className="text-xs text-field-muted block">
+                      Decision Note / Rejection Reason (Required if rejecting):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter reason or note to personnel..."
+                      value={rejectionReasons[selectedRequestForDetail.request_id] || ''}
+                      onChange={(e) =>
+                        setRejectionReasons((prev) => ({
+                          ...prev,
+                          [selectedRequestForDetail.request_id]: e.target.value,
+                        }))
+                      }
+                      className="w-full bg-field-surface border border-field-border rounded px-3 py-2 text-xs text-field-primary focus:outline-none focus:border-command-blue"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      disabled={decidingId === selectedRequestForDetail.request_id}
+                      onClick={() => handleDecision(selectedRequestForDetail.request_id, 'REJECTED')}
+                      className="px-4 py-2 bg-triage-red hover:bg-red-700 text-white rounded text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      Reject Request
+                    </button>
+                    <button
+                      type="button"
+                      disabled={decidingId === selectedRequestForDetail.request_id}
+                      onClick={() => handleDecision(selectedRequestForDetail.request_id, 'APPROVED')}
+                      className="px-5 py-2 bg-readiness-green hover:bg-emerald-600 text-white rounded text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      Approve Request
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-field-surface-subtle border border-field-border rounded-lg text-xs space-y-1">
+                  <div className="font-bold text-field-primary">
+                    Officer Decision: <span className={selectedRequestForDetail.status === 'APPROVED' ? 'text-readiness-green' : 'text-triage-red'}>{selectedRequestForDetail.status}</span>
+                  </div>
+                  {selectedRequestForDetail.officer_reason && (
+                    <div className="text-field-muted">
+                      Reason: "{selectedRequestForDetail.officer_reason}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-field-border flex justify-end bg-field-surface-subtle">
+              <button
+                type="button"
+                onClick={() => setSelectedRequestForDetail(null)}
+                className="px-4 py-2 bg-field-border hover:bg-field-border/80 text-field-primary rounded text-xs font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="p-16 bg-field-surface border border-field-border rounded-lg flex flex-col items-center justify-center text-field-muted">

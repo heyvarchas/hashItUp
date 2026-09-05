@@ -237,6 +237,26 @@ def get_pending_requests(
     return requests
 
 
+@router.get("/requests", response_model=List[ChangeRequestOut])
+def get_all_requests(
+    status_filter: Optional[str] = None,
+    request_type: Optional[str] = None,
+    claims: dict = Depends(require_roles(["welfare_officer", "admin"])),
+    db: Session = Depends(get_db),
+):
+    """
+    Lists all change requests with optional status and request_type filters for welfare officers.
+    """
+    query = db.query(ChangeRequest)
+    if status_filter and status_filter.upper() != "ALL":
+        query = query.filter(ChangeRequest.status == status_filter.upper())
+    if request_type and request_type.lower() != "all":
+        query = query.filter(ChangeRequest.request_type == request_type.lower())
+
+    requests = query.order_by(ChangeRequest.submitted_at.desc()).all()
+    return requests
+
+
 @router.get("/requests/history", response_model=List[ChangeRequestOut])
 def get_decided_requests_history(
     claims: dict = Depends(require_roles(["welfare_officer", "admin"])),
@@ -315,29 +335,53 @@ def decide_request(
             detail="Decision must be either 'APPROVED' or 'REJECTED'",
         )
 
+    if decision_clean == "REJECTED" and (not payload.reason or not payload.reason.strip()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A decision reason is required when rejecting a request.",
+        )
+
     officer_id = _resolve_caller_person_id(claims, db)
 
     req.status = decision_clean
     req.officer_decision = decision_clean
-    req.officer_reason = payload.reason
+    req.officer_reason = payload.reason.strip() if payload.reason else None
     req.decided_by_person_id = officer_id
     req.decided_at = datetime.datetime.now(datetime.timezone.utc)
     req.notification_status = "NOTIFIED"
 
     # Create in-app notification for the employee
     req_label = req.request_type.replace("_", " ").title()
-    if decision_clean == "APPROVED":
-        notif_title = f"{req_label} Request Approved"
-        notif_msg = f"Your {req_label} request has been approved by the Welfare Officer."
-        if payload.reason:
-            notif_msg += f" Note: {payload.reason}"
+    if req.request_type == "work_hours":
+        cur_h = req.request_details.get("current_hours", 10)
+        req_h = req.request_details.get("requested_hours", 8)
+        change_desc = f"to change duty hours from {cur_h} hours/day to {req_h} hours/day"
+    elif req.request_type == "leave":
+        days = req.request_details.get("leave_days", 5)
+        l_type = req.request_details.get("leave_type", "Casual Leave")
+        change_desc = f"for {days} days of {l_type}"
+    elif req.request_type == "transfer":
+        posting = req.request_details.get("requested_posting", "Requested Unit")
+        change_desc = f"for transfer to {posting}"
+    elif req.request_type == "day_to_night":
+        change_desc = "for Day → Night shift change"
+    elif req.request_type == "night_to_day":
+        change_desc = "for Night → Day shift change"
     else:
-        notif_title = f"{req_label} Request Rejected"
-        notif_msg = f"Your {req_label} request has been rejected."
+        change_desc = f"for {req_label}"
+
+    if decision_clean == "APPROVED":
+        notif_title = "Request Approved"
+        notif_msg = f"Your request {change_desc} has been approved by the Welfare Officer."
+        if payload.reason:
+            notif_msg += f"\nOfficer Note: {payload.reason}"
+    else:
+        notif_title = "Request Rejected"
+        notif_msg = f"Your request {change_desc} was not approved."
         if payload.reason:
             notif_msg += f"\nReason: {payload.reason}"
         else:
-            notif_msg += "\nReason: Current operational requirements do not permit the requested change."
+            notif_msg += "\nReason: Current operational requirements do not permit the requested change at this time."
 
     emp_notif = Notification(
         notification_id=uuid.uuid4(),
@@ -353,6 +397,40 @@ def decide_request(
     db.commit()
     db.refresh(req)
     return req
+
+
+@router.post("/requests/{request_id}/approve", response_model=ChangeRequestOut)
+def approve_request(
+    request_id: uuid.UUID,
+    payload: Optional[ChangeRequestDecision] = None,
+    claims: dict = Depends(require_roles(["welfare_officer", "admin"])),
+    db: Session = Depends(get_db),
+):
+    """
+    POST alias to approve a change request.
+    """
+    decision_payload = ChangeRequestDecision(
+        decision="APPROVED",
+        reason=payload.reason if payload else None,
+    )
+    return decide_request(request_id, decision_payload, claims, db)
+
+
+@router.post("/requests/{request_id}/reject", response_model=ChangeRequestOut)
+def reject_request(
+    request_id: uuid.UUID,
+    payload: ChangeRequestDecision,
+    claims: dict = Depends(require_roles(["welfare_officer", "admin"])),
+    db: Session = Depends(get_db),
+):
+    """
+    POST alias to reject a change request with mandatory/provided reason.
+    """
+    decision_payload = ChangeRequestDecision(
+        decision="REJECTED",
+        reason=payload.reason,
+    )
+    return decide_request(request_id, decision_payload, claims, db)
 
 
 # ---------------------------------------------------------------------------

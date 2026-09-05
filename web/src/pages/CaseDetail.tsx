@@ -311,11 +311,11 @@ export const CaseDetail: React.FC = () => {
       {/* Top Header Rail */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
-          onClick={() => navigate('/welfare/alerts')}
+          onClick={() => navigate('/welfare')}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-field-surface hover:bg-field-surface-elevated text-field-primary border border-field-border text-xs font-medium transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Triage Queue</span>
+          <span>Back to Unit Overview</span>
         </button>
 
         <button

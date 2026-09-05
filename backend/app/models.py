@@ -279,7 +279,7 @@ class ChangeRequest(Base):
     __tablename__ = "change_requests"
     __table_args__ = (
         CheckConstraint(
-            "request_type IN ('leave', 'increase_workers', 'decrease_workers', 'transfer', 'shift_change')",
+            "request_type IN ('leave', 'work_hours', 'transfer', 'day_to_night', 'night_to_day', 'shift_change', 'increase_workers', 'decrease_workers')",
             name="ck_change_requests_type_valid",
         ),
         CheckConstraint(
